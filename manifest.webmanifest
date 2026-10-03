@@ -1,0 +1,15 @@
+{
+  "name": "Hawk Talk",
+  "short_name": "Hawk Talk",
+  "description": "Video calls with your siblings.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#DCEBFA",
+  "theme_color": "#18213D",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
