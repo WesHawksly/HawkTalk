@@ -9,6 +9,8 @@
 <meta name="apple-mobile-web-app-title" content="Hawk Talk">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Hawk Talk</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A6%85%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -168,6 +170,14 @@
   }
   .foot { margin-top: auto; padding-top: 32px; }
 
+  .notify { margin-top: 36px; padding-top: 28px; border-top: 2px solid var(--line); }
+  .notify h2 { font-size: 1.25rem; letter-spacing: -0.01em; margin: 0 0 6px; }
+  .notify .note:first-of-type { margin-top: 0; }
+  .notify label { margin-top: 14px; }
+  .notify-status { font-weight: 600; line-height: 1.45; margin: 0; }
+  #familyShown { white-space: nowrap; }
+  .notify .text-btn { margin: 6px 0 0; padding-left: 0; }
+
   /* ---------- Call ---------- */
   #call {
     position: fixed;
@@ -308,6 +318,42 @@
     font-size: 1rem;
   }
   .invite-btn:active { background: var(--sun-press); }
+  .top-btns { flex: none; display: flex; gap: 8px; }
+  .invite-btn.alt { background: #fff; }
+  .invite-btn.alt:active { background: #E4EAF6; }
+
+  .sheet {
+    position: absolute;
+    inset: 0;
+    z-index: 8;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    background: rgba(10, 14, 30, .55);
+  }
+  .sheet-card {
+    width: 100%;
+    max-width: 440px;
+    max-height: 85%;
+    overflow-y: auto;
+    padding: 24px 22px calc(env(safe-area-inset-bottom, 0px) + 16px);
+    border-radius: 26px 26px 0 0;
+    background: var(--ink);
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, .4);
+  }
+  .ring-list { margin: 14px 0 0; }
+  .ring-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 4px;
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.125rem;
+    border-bottom: 1px solid rgba(255, 255, 255, .12);
+  }
+  .ring-item input { width: 24px; height: 24px; accent-color: var(--sun); flex: none; }
+  .sheet .note { color: #C9D3EA; }
 
   .banner {
     position: absolute;
@@ -343,6 +389,9 @@
   .wait-title { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.015em; margin: 0 0 8px; }
   .wait-body { margin: 0; color: #C9D3EA; line-height: 1.45; }
   .waiting .big { margin-top: 20px; }
+  .waiting .big + .big { margin-top: 10px; }
+  .big.ghost { background: transparent; color: #fff; box-shadow: inset 0 0 0 2px #fff; }
+  .big.ghost:active { background: rgba(255, 255, 255, .12); }
 
   .controls {
     position: absolute;
@@ -451,6 +500,24 @@
       </div>
       <p class="note">A code works like a meeting spot. Pick one your family always uses, like garcia-kids, and anyone can hop in whenever.</p>
     </div>
+
+    <div id="notify" class="notify" hidden>
+      <h2>Get rung for calls</h2>
+      <div id="notifyOff" hidden>
+        <p class="note">Turn on notifications so this phone rings when a sibling taps <strong>Ring</strong> in a call.</p>
+        <label for="family">Family code</label>
+        <div class="join-row">
+          <input id="family" type="text" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="e.g. garcia-hawks-4821" enterkeyhint="done">
+          <button class="secondary" id="notifyOnBtn" type="button">Turn on</button>
+        </div>
+        <p class="note">Everyone in your family types the same code. Make it hard to guess, since anyone who knows it can ring you.</p>
+      </div>
+      <div id="notifyOn" hidden>
+        <p class="notify-status">Notifications are on for family <span id="familyShown"></span>.</p>
+        <button class="text-btn" id="notifyOffBtn" type="button">Turn off</button>
+      </div>
+      <p id="notifyNote" class="note" hidden></p>
+    </div>
   </section>
 
   <p id="homeMsg" class="msg" role="status" aria-live="polite"></p>
@@ -470,6 +537,7 @@
   <div id="waiting" class="waiting" hidden>
     <p class="wait-title" id="waitTitle">You're the first one here</p>
     <p class="wait-body" id="waitBody">Send the invite to your siblings. They'll show up here when they join.</p>
+    <button class="big" id="waitRing" type="button" hidden><span data-icon="bell"></span>Ring the family</button>
     <button class="big" id="waitInvite" type="button"><span data-icon="invite"></span>Invite someone</button>
   </div>
 
@@ -478,11 +546,24 @@
       <span id="count">Connecting…</span>
       <span id="roomCode" class="code"></span>
     </div>
-    <button class="invite-btn" id="inviteBtn" type="button"><span data-icon="invite" data-size="20"></span>Invite</button>
+    <div class="top-btns">
+      <button class="invite-btn alt" id="ringBtn" type="button" hidden><span data-icon="bell" data-size="20"></span>Ring</button>
+      <button class="invite-btn" id="inviteBtn" type="button"><span data-icon="invite" data-size="20"></span>Invite</button>
+    </div>
   </header>
 
   <p id="banner" class="banner" hidden role="status"></p>
   <button id="soundBtn" class="sound" type="button" hidden>Tap to turn on sound</button>
+
+  <div id="ringSheet" class="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="ringTitle">
+    <div class="sheet-card">
+      <p class="wait-title" id="ringTitle">Who should we ring?</p>
+      <div id="ringList" class="ring-list"></div>
+      <p id="ringMsg" class="note" role="status" aria-live="polite"></p>
+      <button class="big" id="ringGo" type="button"><span data-icon="bell"></span>Ring</button>
+      <button class="text-btn" id="ringCancel" type="button" style="color:#fff">Cancel</button>
+    </div>
+  </div>
 
   <nav class="controls" aria-label="Call controls">
     <button class="ctl" id="micBtn" type="button"><span class="ic"></span><span class="lbl">Mute</span></button>
@@ -505,6 +586,9 @@
   // using the same free connection server. Change it if you ever want a fresh start.
   const PREFIX = 'fc-r8m3tq-';
   const MAX_PEOPLE = 6;
+  // Address of your push server, so siblings can be rung for a call (see "Call
+  // notifications" in README.md). While it's empty, the Ring feature stays hidden.
+  const PUSH_SERVER = '';
 
   const $ = (s) => document.querySelector(s);
 
@@ -516,6 +600,7 @@
     camOff: '<path d="M10.5 6h3a2.5 2.5 0 0 1 2.5 2.5v3M16 16a2.5 2.5 0 0 1-2.5 2h-8A2.5 2.5 0 0 1 3 15.5v-7A2.5 2.5 0 0 1 5 6"/><path d="M16 10.5l5-3v9l-3.5-2.1"/><path d="M3 3l18 18"/>',
     flip: '<path d="M4 12a8 8 0 0 1 13.7-5.7L20 8.5"/><path d="M20 4v4.5h-4.5"/><path d="M20 12a8 8 0 0 1-13.7 5.7L4 15.5"/><path d="M4 20v-4.5h4.5"/>',
     leave: '<path fill="currentColor" stroke="none" d="M12 8.5c-3.6 0-6.9 1.2-9.3 3.3a1.6 1.6 0 0 0-.1 2.3l1.7 1.7a1.6 1.6 0 0 0 2 .2l2.2-1.4a1.6 1.6 0 0 0 .7-1.4v-1.6a12 12 0 0 1 5.6 0v1.6c0 .6.3 1.1.7 1.4l2.2 1.4a1.6 1.6 0 0 0 2-.2l1.7-1.7a1.6 1.6 0 0 0-.1-2.3C18.9 9.7 15.6 8.5 12 8.5z"/>',
+    bell: '<path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2.5h-15z"/><path d="M10 21a2 2 0 0 0 4 0"/>',
     invite: '<circle cx="9" cy="8" r="4"/><path d="M2.5 21a6.5 6.5 0 0 1 13 0"/><path d="M19 8v6M16 11h6"/>'
   };
   function icon(name, size = 26) {
@@ -538,7 +623,11 @@
     stage: $('#stage'), me: $('#me'), meVideo: $('#meVideo'), meAvatar: $('#meAvatar'), meCircle: $('#meCircle'),
     waiting: $('#waiting'), waitTitle: $('#waitTitle'), waitBody: $('#waitBody'), waitInvite: $('#waitInvite'),
     count: $('#count'), roomCode: $('#roomCode'), inviteBtn: $('#inviteBtn'), banner: $('#banner'), soundBtn: $('#soundBtn'),
-    micBtn: $('#micBtn'), camBtn: $('#camBtn'), flipBtn: $('#flipBtn'), leaveBtn: $('#leaveBtn'), toast: $('#toast')
+    micBtn: $('#micBtn'), camBtn: $('#camBtn'), flipBtn: $('#flipBtn'), leaveBtn: $('#leaveBtn'), toast: $('#toast'),
+    notify: $('#notify'), notifyOff: $('#notifyOff'), notifyOn: $('#notifyOn'), family: $('#family'),
+    notifyOnBtn: $('#notifyOnBtn'), notifyOffBtn: $('#notifyOffBtn'), familyShown: $('#familyShown'), notifyNote: $('#notifyNote'),
+    ringBtn: $('#ringBtn'), waitRing: $('#waitRing'), ringSheet: $('#ringSheet'), ringList: $('#ringList'),
+    ringMsg: $('#ringMsg'), ringGo: $('#ringGo'), ringCancel: $('#ringCancel')
   };
 
   const state = {
@@ -624,6 +713,7 @@
     el.rejoinBtn.hidden = !last;
     el.rejoinCode.textContent = last || '';
     el.secureWarn.hidden = window.isSecureContext && location.protocol !== 'file:';
+    renderNotify();
   }
 
   function showHomeMsg(text) { el.homeMsg.textContent = text || ''; }
@@ -1090,6 +1180,7 @@
     setStatus('Connecting…');
     renderControls();
     renderMe();
+    renderRing();
     checkCameras();
     layout();
     if (!state.hasCam) toast('Your camera is not available, so you joined with audio only.');
@@ -1335,6 +1426,7 @@
     el.meVideo.srcObject = null;
     releaseWake();
     hideBanner();
+    closeRing();
     el.soundBtn.hidden = true;
 
     Object.assign(state, {
@@ -1343,6 +1435,269 @@
     });
     history.replaceState(null, '', location.pathname + location.search);
     showHome();
+  }
+
+  /* ---------- Call notifications ---------- */
+
+  const BLOCKED = 'Notifications are blocked for Hawk Talk. Allow them in your phone or browser settings, then come back.';
+
+  function cleanFamily(s) {
+    return String(s || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+  }
+  function family() { return cleanFamily(store.get('fc-family')); }
+  function pushOn() { return store.get('fc-push') === 'on' && !!family(); }
+  function canPush() {
+    return window.isSecureContext && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+  }
+  function isIOS() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  }
+  function isStandalone() {
+    return navigator.standalone === true || (!!window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+  }
+
+  // A random id for this phone, so the push server can tell a family's devices apart.
+  function deviceId() {
+    let id = store.get('fc-device');
+    if (!id || !/^[a-z0-9]{8,40}$/.test(id)) {
+      const a = new Uint8Array(12);
+      crypto.getRandomValues(a);
+      id = Array.from(a, (b) => b.toString(16).padStart(2, '0')).join('');
+      store.set('fc-device', id);
+    }
+    return id;
+  }
+
+  async function api(path, body) {
+    const opts = body
+      ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+      : {};
+    const res = await fetch(PUSH_SERVER.replace(/\/+$/, '') + path, opts);
+    let data = null;
+    try { data = await res.json(); } catch (_) {}
+    if (!res.ok) throw new Error((data && data.error) || `The notification server answered with error ${res.status}.`);
+    return data || {};
+  }
+  function pushError(err) {
+    if (err instanceof TypeError) return 'The notification server could not be reached. Check your internet connection and try again.';
+    return (err && err.message) || 'Something went wrong. Try again.';
+  }
+
+  function b64uBytes(s) {
+    const t = String(s).replace(/-/g, '+').replace(/_/g, '/');
+    const bin = atob(t + '='.repeat((4 - (t.length % 4)) % 4));
+    return Uint8Array.from(bin, (c) => c.charCodeAt(0));
+  }
+  function sameKey(sub, key) {
+    const k = sub.options && sub.options.applicationServerKey;
+    if (!k) return true;
+    const a = new Uint8Array(k), b = b64uBytes(key);
+    return a.length === b.length && a.every((x, i) => x === b[i]);
+  }
+
+  function registerSW() {
+    if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+    // Tapping a call notification while the app is already open.
+    navigator.serviceWorker.addEventListener('message', (ev) => {
+      const d = ev.data;
+      if (!d || d.t !== 'open') return;
+      const room = cleanCode(d.room);
+      if (!room) return;
+      if (state.inCall || state.joining) {
+        if (room !== state.room) toast(`Someone is calling you in another call (${room}).`);
+        return;
+      }
+      location.hash = '#room=' + encodeURIComponent(room);
+    });
+  }
+
+  async function getSubscription(key) {
+    const reg = await Promise.race([
+      navigator.serviceWorker.ready,
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Notifications could not be set up in this browser.')), 10000))
+    ]);
+    let sub = await reg.pushManager.getSubscription();
+    if (sub && !sameKey(sub, key)) {
+      try { await sub.unsubscribe(); } catch (_) {}
+      sub = null;
+    }
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64uBytes(key) });
+    return sub;
+  }
+
+  function setNotifyNote(text) {
+    el.notifyNote.textContent = text || '';
+    el.notifyNote.hidden = !text;
+  }
+
+  function renderNotify(note) {
+    el.notify.hidden = !PUSH_SERVER;
+    if (!PUSH_SERVER) return;
+    let msg = note || '';
+    let off = false, on = false;
+    if (!canPush()) {
+      if (isIOS() && !isStandalone()) {
+        msg = 'On iPhone, first add Hawk Talk to your Home Screen: tap the Share button, then Add to Home Screen. Open it from there to turn on notifications.';
+      } else if (isIOS()) {
+        msg = 'Update your iPhone to iOS 16.4 or newer to get call notifications.';
+      } else {
+        msg = "This browser can't get call notifications. Try Chrome or Safari.";
+      }
+    } else if (pushOn()) {
+      on = true;
+      if (Notification.permission === 'denied') msg = BLOCKED;
+    } else {
+      off = true;
+      if (!el.family.value) el.family.value = store.get('fc-family') || '';
+    }
+    el.notifyOff.hidden = !off;
+    el.notifyOn.hidden = !on;
+    el.familyShown.textContent = family();
+    setNotifyNote(msg);
+  }
+
+  let pushBusy = false;
+  async function enablePush() {
+    if (pushBusy) return;
+    const fam = cleanFamily(el.family.value);
+    if (fam.length < 6) {
+      setNotifyNote('Use a family code with at least 6 letters or numbers.');
+      el.family.focus();
+      return;
+    }
+    const name = getName();
+    if (!name) return;
+    pushBusy = true;
+    el.notifyOnBtn.disabled = true;
+    setNotifyNote('Turning on…');
+    let note = '';
+    try {
+      // iPhones only allow this straight after a tap, so ask before anything else.
+      const perm = await Notification.requestPermission();
+      if (perm === 'denied') throw new Error(BLOCKED);
+      if (perm !== 'granted') throw new Error('Notifications were not allowed. Tap Turn on to try again.');
+      const { key } = await api('/key');
+      const sub = await getSubscription(key);
+      await api('/subscribe', { family: fam, id: deviceId(), name, subscription: sub.toJSON(), test: true });
+      store.set('fc-family', fam);
+      store.set('fc-push', 'on');
+      note = 'Done. A test notification is on its way.';
+    } catch (err) {
+      note = pushError(err);
+    } finally {
+      pushBusy = false;
+      el.notifyOnBtn.disabled = false;
+      renderNotify(note);
+    }
+  }
+
+  async function disablePush() {
+    const fam = family();
+    store.set('fc-push', 'off');
+    renderNotify('Notifications are off on this phone.');
+    try { await api('/unsubscribe', { family: fam, id: deviceId() }); } catch (_) {}
+    try {
+      const reg = await navigator.serviceWorker.getRegistration();
+      const sub = reg && await reg.pushManager.getSubscription();
+      if (sub) await sub.unsubscribe();
+    } catch (_) {}
+  }
+
+  // Keeps the server's copy of this phone's name and subscription up to date.
+  async function syncPush() {
+    if (!PUSH_SERVER || !canPush() || !pushOn() || Notification.permission !== 'granted') return;
+    const name = cleanName(store.get('fc-name'));
+    if (!name) return;
+    try {
+      const { key } = await api('/key');
+      const sub = await getSubscription(key);
+      await api('/subscribe', { family: family(), id: deviceId(), name, subscription: sub.toJSON() });
+    } catch (_) {}
+  }
+
+  function canRing() { return !!PUSH_SERVER && !!family(); }
+  function renderRing() {
+    const ok = canRing();
+    el.ringBtn.hidden = !ok;
+    el.waitRing.hidden = !ok;
+    el.waitInvite.classList.toggle('ghost', ok);
+  }
+
+  function nameList(names) {
+    const u = [...new Set(names)];
+    if (u.length <= 1) return u.join('');
+    return `${u.slice(0, -1).join(', ')} and ${u[u.length - 1]}`;
+  }
+
+  let ringToken = 0;
+  async function openRing() {
+    if (!canRing() || !state.inCall) return;
+    const token = ++ringToken;
+    el.ringSheet.hidden = false;
+    el.ringList.textContent = '';
+    el.ringGo.disabled = true;
+    el.ringMsg.textContent = 'Loading your family…';
+    try {
+      const { members } = await api('/members', { family: family() });
+      if (token !== ringToken || el.ringSheet.hidden) return;
+      // Someone with a phone and a computer shows up once and both get rung.
+      const groups = new Map();
+      for (const m of members || []) {
+        if (m.id === deviceId()) continue;
+        const nm = cleanName(m.name) || 'Someone';
+        const k = nm.toLowerCase();
+        if (!groups.has(k)) groups.set(k, { name: nm, ids: [] });
+        groups.get(k).ids.push(m.id);
+      }
+      if (!groups.size) {
+        el.ringMsg.textContent = `Nobody else has turned on call notifications yet. Ask your siblings to open Hawk Talk and turn them on with the family code ${family()}.`;
+        return;
+      }
+      [...groups.values()].sort((a, b) => a.name.localeCompare(b.name)).forEach((g) => {
+        const row = document.createElement('label');
+        row.className = 'ring-item';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = true;
+        cb.value = g.ids.join(',');
+        const nm = document.createElement('span');
+        nm.textContent = g.name;
+        row.append(cb, nm);
+        el.ringList.appendChild(row);
+      });
+      el.ringMsg.textContent = '';
+      el.ringGo.disabled = false;
+    } catch (err) {
+      if (token === ringToken) el.ringMsg.textContent = pushError(err);
+    }
+  }
+
+  function closeRing() {
+    ringToken++;
+    el.ringSheet.hidden = true;
+  }
+
+  async function doRing() {
+    const ids = [...el.ringList.querySelectorAll('input:checked')].flatMap((c) => c.value.split(','));
+    if (!ids.length) { el.ringMsg.textContent = 'Pick at least one person to ring.'; return; }
+    const token = ringToken;
+    el.ringGo.disabled = true;
+    el.ringMsg.textContent = 'Ringing…';
+    try {
+      const r = await api('/ring', { family: family(), from: { id: deviceId(), name: state.name }, room: state.room, to: ids });
+      if (token !== ringToken) return;
+      closeRing();
+      const sent = r.sent || [];
+      const failed = (r.failed || []).filter((n) => !sent.includes(n));
+      if (!sent.length) toast("Nobody could be reached. Try Invite instead.");
+      else if (failed.length) toast(`Ringing ${nameList(sent)}. ${nameList(failed)} could not be reached.`);
+      else toast(`Ringing ${nameList(sent)}…`);
+    } catch (err) {
+      if (token !== ringToken) return;
+      el.ringMsg.textContent = pushError(err);
+      el.ringGo.disabled = false;
+    }
   }
 
   /* ---------- Small helpers ---------- */
@@ -1386,6 +1741,18 @@
 
   el.inviteBtn.addEventListener('click', invite);
   el.waitInvite.addEventListener('click', invite);
+  el.ringBtn.addEventListener('click', openRing);
+  el.waitRing.addEventListener('click', openRing);
+  el.ringGo.addEventListener('click', doRing);
+  el.ringCancel.addEventListener('click', closeRing);
+  el.ringSheet.addEventListener('click', (ev) => { if (ev.target === el.ringSheet) closeRing(); });
+  el.notifyOnBtn.addEventListener('click', enablePush);
+  el.notifyOffBtn.addEventListener('click', disablePush);
+  el.family.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') enablePush(); });
+  el.name.addEventListener('change', () => {
+    const n = cleanName(el.name.value);
+    if (n && n !== store.get('fc-name')) { store.set('fc-name', n); syncPush(); }
+  });
   el.micBtn.addEventListener('click', toggleMic);
   el.camBtn.addEventListener('click', toggleCam);
   el.flipBtn.addEventListener('click', flipCamera);
@@ -1410,7 +1777,9 @@
     broadcast({ t: 'bye' });
   });
 
+  registerSW();
   renderHome();
+  syncPush();
 })();
 </script>
 </body>
