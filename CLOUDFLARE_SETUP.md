@@ -86,7 +86,7 @@ This tells the worker to use the `hawktalk` storage you made in Step 2.
    You should see:
 
    ```
-   {"ok":true,"app":"Hawk Talk push server"}
+   {"ok":true,"app":"Hawk Talk push server","version":"1.1.0"}
    ```
 
 2. Now add `/key` to the end of the address, e.g. `https://hawktalk-push.your-name.workers.dev/key`.
@@ -182,6 +182,6 @@ If someone's phone is off or offline, the ring is dropped after about 90 seconds
 
 - **Cost:** the Cloudflare free plan easily covers a family. Its daily limits are about 100,000 requests and 1,000 storage writes. Hawk Talk only writes when a phone turns notifications on or changes its name.
 - **What's stored:** each phone's name and the push address its phone company gave it. The family code isn't stored; only a scrambled (hashed) version is used to group your phones together.
-- **Updating the server later:** if `push-server/worker.js` changes in this repository, repeat Step 4 (paste in the new code and click **Deploy**). Nothing else needs redoing.
+- **Updating the server later:** if `push-server/worker.js` changes in this repository, repeat Step 4 (paste in the new code and click **Deploy**). Nothing else needs redoing. To check which version your server is running, open its address in a browser and look at `"version"`; [CHANGELOG.md](CHANGELOG.md) says what changed.
 - **Starting over:** to wipe everything, open the `hawktalk` KV namespace in Cloudflare and delete its entries, including the one called `vapid` (the server's key). The server makes a new key automatically. Every phone then needs to tap **Turn off** and then **Turn on** again.
 - **Optional contact setting:** Apple and Google like to know who runs a push server. By default it reports this GitHub repository. To use your own email instead, go to the worker's **Settings → Variables and Secrets** and add a text variable named `VAPID_SUBJECT` with the value `mailto:you@example.com`.

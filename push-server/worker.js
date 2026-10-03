@@ -5,6 +5,9 @@
 // A family code is the shared secret: anyone who knows it can see the names in the
 // family and ring them, so pick one that is hard to guess.
 
+// Bump this when the server code changes, and note it in CHANGELOG.md. The address's
+// home page shows it, so you can check the deployed copy is up to date.
+const VERSION = '1.1.0';
 const MAX_MEMBERS = 30;
 const RING_TTL = 90;      // seconds a ring waits for an offline phone before it's dropped
 const TEST_TTL = 600;
@@ -20,7 +23,7 @@ export default {
       if (req.method === 'GET' && path === '/key') {
         return json({ key: (await vapidKeys(env)).publicKey });
       }
-      if (req.method === 'GET' && path === '') return json({ ok: true, app: 'Hawk Talk push server' });
+      if (req.method === 'GET' && path === '') return json({ ok: true, app: 'Hawk Talk push server', version: VERSION });
       if (req.method !== 'POST') return json({ error: 'Not found' }, 404);
 
       const body = await req.json().catch(() => null);

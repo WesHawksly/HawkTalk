@@ -522,7 +522,7 @@
 
   <p id="homeMsg" class="msg" role="status" aria-live="polite"></p>
   <p id="secureWarn" class="warn" hidden>Camera access only works from a secure web address (one starting with https). Upload this file to a free host like Netlify or GitHub Pages, then open it from there.</p>
-  <p class="foot note">Works best with up to 6 people.</p>
+  <p class="foot note">Works best with up to 6 people.<br><span id="appVersion"></span></p>
 </main>
 
 <section id="call" hidden aria-label="Video call">
@@ -582,6 +582,8 @@
   'use strict';
 
   const APP_NAME = 'Hawk Talk';
+  // Bump this with each release and add a line to CHANGELOG.md. Shown at the bottom of the home screen.
+  const APP_VERSION = '1.1.0';
   // Unique to your copy of the app, so your calls never mix with anyone else
   // using the same free connection server. Change it if you ever want a fresh start.
   const PREFIX = 'fc-r8m3tq-';
@@ -619,7 +621,7 @@
     home: $('#home'), call: $('#call'), name: $('#name'),
     invited: $('#invited'), invitedCode: $('#invitedCode'), joinInvite: $('#joinInvite'), notInvited: $('#notInvited'),
     normal: $('#normal'), start: $('#start'), rejoinBtn: $('#rejoinBtn'), rejoinCode: $('#rejoinCode'),
-    code: $('#code'), join: $('#join'), homeMsg: $('#homeMsg'), secureWarn: $('#secureWarn'),
+    code: $('#code'), join: $('#join'), homeMsg: $('#homeMsg'), secureWarn: $('#secureWarn'), appVersion: $('#appVersion'),
     stage: $('#stage'), me: $('#me'), meVideo: $('#meVideo'), meAvatar: $('#meAvatar'), meCircle: $('#meCircle'),
     waiting: $('#waiting'), waitTitle: $('#waitTitle'), waitBody: $('#waitBody'), waitInvite: $('#waitInvite'),
     count: $('#count'), roomCode: $('#roomCode'), inviteBtn: $('#inviteBtn'), banner: $('#banner'), soundBtn: $('#soundBtn'),
@@ -713,6 +715,7 @@
     el.rejoinBtn.hidden = !last;
     el.rejoinCode.textContent = last || '';
     el.secureWarn.hidden = window.isSecureContext && location.protocol !== 'file:';
+    el.appVersion.textContent = `Version ${APP_VERSION}`;
     renderNotify();
   }
 

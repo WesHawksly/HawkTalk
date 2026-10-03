@@ -43,7 +43,7 @@ The server is the file `push-server/worker.js`. It runs for free on Cloudflare W
 3. Open **Workers & Pages** and click **Create**. Start from the **Hello World** worker, name it `hawktalk-push`, then click **Deploy**.
 4. Click **Edit code**. Delete what's there, paste in everything from `push-server/worker.js`, then click **Deploy**.
 5. Go to the worker's **Settings → Bindings**. Click **Add**, then **KV namespace**. Set the variable name to `HAWK` (capital letters) and pick the `hawktalk` namespace. Save, and deploy again if it asks.
-6. Copy the worker's address. It looks like `https://hawktalk-push.your-name.workers.dev`. If you open it in a browser, you should see `{"ok":true,"app":"Hawk Talk push server"}`.
+6. Copy the worker's address. It looks like `https://hawktalk-push.your-name.workers.dev`. If you open it in a browser, you should see `{"ok":true,"app":"Hawk Talk push server","version":"1.1.0"}`.
 
 ### 2. Point the app at it
 
@@ -100,6 +100,16 @@ After you've been in a call, a **Rejoin** button on the home screen takes you ba
 | **Leave** | Ends the call for you |
 
 If the sound is off when you join, tap **Tap to turn on sound**.
+
+## Versions
+
+The app's version shows at the bottom of the home screen, and [CHANGELOG.md](CHANGELOG.md) lists what changed in each one. When you release a change:
+
+1. Bump `APP_VERSION` near the top of the script in `index.html`.
+2. If you changed `push-server/worker.js`, bump `VERSION` at the top of it too, and paste the new code into Cloudflare (step 4 of the setup guide).
+3. Add a section to `CHANGELOG.md`.
+
+Use `major.minor.patch`: bump the last number for fixes, the middle one for new features, and the first one for big changes.
 
 ## Troubleshooting
 
