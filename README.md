@@ -36,6 +36,8 @@ With this set up, you can tap **Ring** during a call, and your siblings' phones 
 
 The server is the file `push-server/worker.js`. It runs for free on Cloudflare Workers.
 
+**Full step-by-step guide with troubleshooting: [CLOUDFLARE_SETUP.md](CLOUDFLARE_SETUP.md).** The short version:
+
 1. Make a free account at https://dash.cloudflare.com/sign-up.
 2. In the dashboard, open **Storage & Databases → KV** (Workers KV). Create a namespace named `hawktalk`.
 3. Open **Workers & Pages** and click **Create**. Start from the **Hello World** worker, name it `hawktalk-push`, then click **Deploy**.
