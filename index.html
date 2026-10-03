@@ -1,0 +1,1417 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#18213D">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Hawk Talk">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Hawk Talk</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A6%85%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sky: #DCEBFA;
+    --ink: #18213D;
+    --sun: #FFC93C;
+    --sun-press: #F2B705;
+    --coral: #F0524F;
+    --paper: #FFFFFF;
+    --mist: #4F5B7C;
+    --tile: #243058;
+
+    --bg: var(--sky);
+    --fg: var(--ink);
+    --field: var(--paper);
+    --muted: var(--mist);
+    --line: #B3C6E2;
+    --warn-bg: #FFF1C7;
+    --warn-fg: #4A3A00;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #10172E;
+      --fg: #EDF2FB;
+      --field: #1B2444;
+      --muted: #A4B1D0;
+      --line: #34406B;
+      --warn-bg: #3A3210;
+      --warn-fg: #FFE7A0;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: 'Familjen Grotesk', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 3px solid var(--sun); outline-offset: 3px; }
+
+  /* ---------- Home ---------- */
+  #home {
+    min-height: 100%;
+    max-width: 440px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    padding: calc(env(safe-area-inset-top, 0px) + 44px) 24px calc(env(safe-area-inset-bottom, 0px) + 24px);
+  }
+  h1 {
+    font-size: clamp(2.75rem, 13vw, 3.5rem);
+    line-height: 0.95;
+    letter-spacing: -0.035em;
+    font-weight: 700;
+    margin: 0 0 14px;
+  }
+  .lede {
+    font-size: 1.125rem;
+    line-height: 1.4;
+    color: var(--muted);
+    margin: 0 0 36px;
+    max-width: 30ch;
+  }
+  .field { margin-bottom: 8px; }
+  label { display: block; font-weight: 600; margin-bottom: 8px; }
+  input[type="text"] {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 2px solid var(--line);
+    background: var(--field);
+    font-size: 1.125rem;
+    min-width: 0;
+  }
+  input[type="text"]:focus { border-color: var(--fg); outline: none; }
+
+  .big {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 19px 24px;
+    margin-top: 20px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--sun);
+    color: var(--ink);
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    transition: transform .08s ease, background-color .08s ease;
+  }
+  .big:active { transform: scale(.98); background: var(--sun-press); }
+  .big:disabled { opacity: .55; transform: none; }
+  .big svg { flex: none; }
+
+  .rejoin {
+    width: 100%;
+    margin-top: 12px;
+    padding: 14px 18px;
+    border-radius: 999px;
+    border: 2px solid var(--fg);
+    background: transparent;
+    font-weight: 600;
+    font-size: 1.0625rem;
+  }
+  .rejoin:disabled { opacity: .55; }
+
+  .join-field { margin-top: 32px; }
+  .join-row { display: flex; gap: 8px; }
+  .join-row input { flex: 1; }
+  .secondary {
+    flex: none;
+    padding: 0 22px;
+    border-radius: 14px;
+    border: 0;
+    background: var(--fg);
+    color: var(--bg);
+    font-weight: 700;
+    font-size: 1.0625rem;
+  }
+  .secondary:disabled { opacity: .55; }
+
+  .note { font-size: .9375rem; line-height: 1.45; color: var(--muted); margin: 10px 0 0; }
+  .center { text-align: center; }
+  .invite-line { font-size: 1.25rem; font-weight: 600; margin: 24px 0 0; }
+  .text-btn {
+    display: block;
+    margin: 18px auto 0;
+    background: none;
+    border: 0;
+    padding: 8px;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    color: var(--fg);
+  }
+  .msg { min-height: 1.4em; margin: 20px 0 0; font-weight: 600; line-height: 1.4; }
+  .warn {
+    background: var(--warn-bg);
+    color: var(--warn-fg);
+    border-radius: 14px;
+    padding: 14px 16px;
+    line-height: 1.45;
+    margin: 16px 0 0;
+  }
+  .foot { margin-top: auto; padding-top: 32px; }
+
+  /* ---------- Call ---------- */
+  #call {
+    position: fixed;
+    inset: 0;
+    background: var(--ink);
+    color: #fff;
+    overflow: hidden;
+  }
+  #stage {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: repeat(var(--cols, 1), minmax(0, 1fr));
+    grid-auto-rows: minmax(0, 1fr);
+    gap: 6px;
+    padding: calc(env(safe-area-inset-top, 0px) + 68px) 6px calc(env(safe-area-inset-bottom, 0px) + 116px);
+  }
+  #stage.solo { padding: 0; gap: 0; }
+  .tile {
+    position: relative;
+    min-height: 0;
+    border-radius: 18px;
+    overflow: hidden;
+    background: var(--tile);
+  }
+  #stage.solo .tile { border-radius: 0; }
+  .tile video, #me video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    background: var(--tile);
+  }
+  .avatar {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: var(--tile);
+  }
+  .avatar span {
+    width: 92px;
+    height: 92px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  #me .avatar span { width: 56px; height: 56px; font-size: 1.5rem; }
+  #call.alone #me .avatar span { width: 120px; height: 120px; font-size: 3.25rem; }
+  .tile-status {
+    position: absolute;
+    left: 0; right: 0;
+    top: calc(50% + 62px);
+    text-align: center;
+    font-weight: 600;
+    color: #C9D3EA;
+  }
+  .tag {
+    position: absolute;
+    left: 10px;
+    bottom: 10px;
+    max-width: calc(100% - 20px);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 11px;
+    border-radius: 999px;
+    background: rgba(24, 33, 61, .74);
+    font-weight: 600;
+    font-size: .9375rem;
+    white-space: nowrap;
+  }
+  .tag .nm { overflow: hidden; text-overflow: ellipsis; }
+  .tag .muted { display: flex; color: var(--coral); }
+  #stage.solo .tag { bottom: calc(env(safe-area-inset-bottom, 0px) + 120px); left: 14px; }
+
+  #me {
+    position: absolute;
+    right: 12px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 120px);
+    width: min(30vw, 150px);
+    aspect-ratio: 3 / 4;
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--tile);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, .9), 0 8px 24px rgba(0, 0, 0, .35);
+    z-index: 3;
+  }
+  #me .tag { font-size: .8125rem; left: 6px; bottom: 6px; padding: 3px 8px; }
+  #call.alone #me {
+    inset: 0;
+    width: auto;
+    aspect-ratio: auto;
+    border-radius: 0;
+    box-shadow: none;
+    z-index: 1;
+  }
+  #call.alone #me .tag { display: none; }
+  video.mirror { transform: scaleX(-1); }
+
+  .topbar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: calc(env(safe-area-inset-top, 0px) + 10px) 12px 10px;
+  }
+  .chip {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 8px 15px;
+    border-radius: 18px;
+    background: rgba(24, 33, 61, .74);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    line-height: 1.2;
+  }
+  #count { font-weight: 700; font-size: 1rem; }
+  .code { font-size: .8125rem; color: #C9D3EA; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .invite-btn {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 17px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--sun);
+    color: var(--ink);
+    font-weight: 700;
+    font-size: 1rem;
+  }
+  .invite-btn:active { background: var(--sun-press); }
+
+  .banner {
+    position: absolute;
+    z-index: 5;
+    left: 50%;
+    transform: translateX(-50%);
+    top: calc(env(safe-area-inset-top, 0px) + 72px);
+    margin: 0;
+    padding: 7px 14px;
+    border-radius: 999px;
+    background: var(--sun);
+    color: var(--ink);
+    font-weight: 600;
+    font-size: .9375rem;
+    white-space: nowrap;
+  }
+
+  .waiting {
+    position: absolute;
+    z-index: 2;
+    left: 16px; right: 16px;
+    top: 50%;
+    transform: translateY(-58%);
+    max-width: 380px;
+    margin: 0 auto;
+    padding: 26px 22px 22px;
+    border-radius: 26px;
+    background: rgba(24, 33, 61, .8);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    text-align: center;
+  }
+  .wait-title { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.015em; margin: 0 0 8px; }
+  .wait-body { margin: 0; color: #C9D3EA; line-height: 1.45; }
+  .waiting .big { margin-top: 20px; }
+
+  .controls {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    z-index: 4;
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    padding: 12px 12px calc(env(safe-area-inset-bottom, 0px) + 16px);
+  }
+  .ctl {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    width: 72px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #fff;
+    font-size: .8125rem;
+    font-weight: 600;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+  }
+  .ctl .ic {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: rgba(255, 255, 255, .18);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    transition: transform .08s ease;
+  }
+  .ctl:active .ic { transform: scale(.93); }
+  .ctl[data-off="true"] .ic { background: #fff; color: var(--ink); }
+  .ctl.leave .ic { background: var(--coral); color: #fff; }
+
+  .sound {
+    position: absolute;
+    z-index: 6;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    padding: 16px 24px;
+    border: 0;
+    border-radius: 999px;
+    background: #fff;
+    color: var(--ink);
+    font-weight: 700;
+    font-size: 1.0625rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
+  }
+
+  .toast {
+    position: fixed;
+    z-index: 10;
+    left: 50%;
+    transform: translateX(-50%);
+    top: calc(env(safe-area-inset-top, 0px) + 74px);
+    max-width: calc(100% - 32px);
+    padding: 10px 18px;
+    border-radius: 999px;
+    background: #fff;
+    color: var(--ink);
+    font-weight: 600;
+    text-align: center;
+    box-shadow: 0 8px 26px rgba(0, 0, 0, .28);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<main id="home">
+  <header>
+    <h1>Hawk Talk</h1>
+    <p class="lede">Video calls between iPhones and Androids. Nothing to install, no accounts.</p>
+  </header>
+
+  <div class="field">
+    <label for="name">Your name</label>
+    <input id="name" type="text" autocomplete="given-name" maxlength="30" placeholder="What your siblings call you" enterkeyhint="done">
+  </div>
+
+  <section id="invited" hidden>
+    <p class="invite-line">You're invited to a call.</p>
+    <button class="big" id="joinInvite" type="button"><span data-icon="phone"></span>Join the call</button>
+    <p class="note center">Call code <strong id="invitedCode"></strong></p>
+    <button class="text-btn" id="notInvited" type="button">Start a different call</button>
+  </section>
+
+  <section id="normal">
+    <button class="big" id="start" type="button"><span data-icon="phone"></span>Start a call</button>
+    <button class="rejoin" id="rejoinBtn" type="button" hidden>Rejoin <strong id="rejoinCode"></strong></button>
+
+    <div class="field join-field">
+      <label for="code">Or join with a code</label>
+      <div class="join-row">
+        <input id="code" type="text" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="e.g. garcia-kids" enterkeyhint="go">
+        <button class="secondary" id="join" type="button">Join</button>
+      </div>
+      <p class="note">A code works like a meeting spot. Pick one your family always uses, like garcia-kids, and anyone can hop in whenever.</p>
+    </div>
+  </section>
+
+  <p id="homeMsg" class="msg" role="status" aria-live="polite"></p>
+  <p id="secureWarn" class="warn" hidden>Camera access only works from a secure web address (one starting with https). Upload this file to a free host like Netlify or GitHub Pages, then open it from there.</p>
+  <p class="foot note">Works best with up to 6 people.</p>
+</main>
+
+<section id="call" hidden aria-label="Video call">
+  <div id="stage"></div>
+
+  <div id="me">
+    <video id="meVideo" autoplay playsinline muted></video>
+    <div id="meAvatar" class="avatar" hidden><span id="meCircle"></span></div>
+    <div class="tag">You</div>
+  </div>
+
+  <div id="waiting" class="waiting" hidden>
+    <p class="wait-title" id="waitTitle">You're the first one here</p>
+    <p class="wait-body" id="waitBody">Send the invite to your siblings. They'll show up here when they join.</p>
+    <button class="big" id="waitInvite" type="button"><span data-icon="invite"></span>Invite someone</button>
+  </div>
+
+  <header class="topbar">
+    <div class="chip">
+      <span id="count">Connecting…</span>
+      <span id="roomCode" class="code"></span>
+    </div>
+    <button class="invite-btn" id="inviteBtn" type="button"><span data-icon="invite" data-size="20"></span>Invite</button>
+  </header>
+
+  <p id="banner" class="banner" hidden role="status"></p>
+  <button id="soundBtn" class="sound" type="button" hidden>Tap to turn on sound</button>
+
+  <nav class="controls" aria-label="Call controls">
+    <button class="ctl" id="micBtn" type="button"><span class="ic"></span><span class="lbl">Mute</span></button>
+    <button class="ctl" id="camBtn" type="button"><span class="ic"></span><span class="lbl">Stop video</span></button>
+    <button class="ctl" id="flipBtn" type="button" hidden aria-label="Flip camera"><span class="ic"></span><span class="lbl">Flip</span></button>
+    <button class="ctl leave" id="leaveBtn" type="button" aria-label="Leave call"><span class="ic"></span><span class="lbl">Leave</span></button>
+  </nav>
+</section>
+
+<div id="toast" class="toast" hidden role="status" aria-live="polite"></div>
+
+<!-- PeerJS: handles the connection setup between phones using a free public server -->
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  const APP_NAME = 'Hawk Talk';
+  // Unique to your copy of the app, so your calls never mix with anyone else
+  // using the same free connection server. Change it if you ever want a fresh start.
+  const PREFIX = 'fc-r8m3tq-';
+  const MAX_PEOPLE = 6;
+
+  const $ = (s) => document.querySelector(s);
+
+  const ICONS = {
+    phone: '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/>',
+    mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/>',
+    micOff: '<path d="M15 9.3V6a3 3 0 0 0-5.7-1.3"/><path d="M9 9v2a3 3 0 0 0 4.9 2.3"/><path d="M5 11a7 7 0 0 0 11.6 5.3M19 11a7 7 0 0 1-.6 2.8"/><path d="M12 18v3"/><path d="M3 3l18 18"/>',
+    cam: '<rect x="3" y="6" width="13" height="12" rx="2.5"/><path d="M16 10.5l5-3v9l-5-3z"/>',
+    camOff: '<path d="M10.5 6h3a2.5 2.5 0 0 1 2.5 2.5v3M16 16a2.5 2.5 0 0 1-2.5 2h-8A2.5 2.5 0 0 1 3 15.5v-7A2.5 2.5 0 0 1 5 6"/><path d="M16 10.5l5-3v9l-3.5-2.1"/><path d="M3 3l18 18"/>',
+    flip: '<path d="M4 12a8 8 0 0 1 13.7-5.7L20 8.5"/><path d="M20 4v4.5h-4.5"/><path d="M20 12a8 8 0 0 1-13.7 5.7L4 15.5"/><path d="M4 20v-4.5h4.5"/>',
+    leave: '<path fill="currentColor" stroke="none" d="M12 8.5c-3.6 0-6.9 1.2-9.3 3.3a1.6 1.6 0 0 0-.1 2.3l1.7 1.7a1.6 1.6 0 0 0 2 .2l2.2-1.4a1.6 1.6 0 0 0 .7-1.4v-1.6a12 12 0 0 1 5.6 0v1.6c0 .6.3 1.1.7 1.4l2.2 1.4a1.6 1.6 0 0 0 2-.2l1.7-1.7a1.6 1.6 0 0 0-.1-2.3C18.9 9.7 15.6 8.5 12 8.5z"/>',
+    invite: '<circle cx="9" cy="8" r="4"/><path d="M2.5 21a6.5 6.5 0 0 1 13 0"/><path d="M19 8v6M16 11h6"/>'
+  };
+  function icon(name, size = 26) {
+    return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name]}</svg>`;
+  }
+  document.querySelectorAll('[data-icon]').forEach((n) => {
+    n.outerHTML = icon(n.dataset.icon, Number(n.dataset.size) || 26);
+  });
+
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (_) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (_) {} }
+  };
+
+  const el = {
+    home: $('#home'), call: $('#call'), name: $('#name'),
+    invited: $('#invited'), invitedCode: $('#invitedCode'), joinInvite: $('#joinInvite'), notInvited: $('#notInvited'),
+    normal: $('#normal'), start: $('#start'), rejoinBtn: $('#rejoinBtn'), rejoinCode: $('#rejoinCode'),
+    code: $('#code'), join: $('#join'), homeMsg: $('#homeMsg'), secureWarn: $('#secureWarn'),
+    stage: $('#stage'), me: $('#me'), meVideo: $('#meVideo'), meAvatar: $('#meAvatar'), meCircle: $('#meCircle'),
+    waiting: $('#waiting'), waitTitle: $('#waitTitle'), waitBody: $('#waitBody'), waitInvite: $('#waitInvite'),
+    count: $('#count'), roomCode: $('#roomCode'), inviteBtn: $('#inviteBtn'), banner: $('#banner'), soundBtn: $('#soundBtn'),
+    micBtn: $('#micBtn'), camBtn: $('#camBtn'), flipBtn: $('#flipBtn'), leaveBtn: $('#leaveBtn'), toast: $('#toast')
+  };
+
+  const state = {
+    session: 0,
+    inCall: false,
+    joining: false,
+    name: '',
+    room: '',
+    myId: '',
+    slot: -1,
+    peer: null,
+    stream: null,
+    facing: 'user',
+    micOn: true,
+    camOn: true,
+    hasCam: true,
+    peers: new Map(),    // remote id -> entry
+    pending: new Map(),  // remote id -> outgoing DataConnection not yet open
+    timers: [],
+    joinedAt: 0,
+    everHadPeers: false,
+    wakeLock: null
+  };
+
+  /* ---------- Codes & names ---------- */
+
+  const ADJ = ['sunny', 'brave', 'quiet', 'lucky', 'cozy', 'silly', 'mellow', 'bright', 'swift', 'gentle', 'jolly', 'happy',
+    'golden', 'misty', 'breezy', 'snowy', 'rusty', 'tiny', 'giant', 'clever', 'fuzzy', 'merry', 'calm', 'bold',
+    'sparkly', 'sleepy', 'proud', 'zesty', 'plucky', 'witty', 'dapper', 'nimble'];
+  const NOUN = ['otter', 'maple', 'comet', 'pebble', 'walrus', 'canyon', 'biscuit', 'harbor', 'falcon', 'meadow', 'pickle',
+    'lantern', 'badger', 'river', 'cactus', 'puffin', 'acorn', 'island', 'koala', 'thunder', 'waffle', 'moose',
+    'orchard', 'beacon', 'turnip', 'heron', 'marble', 'noodle', 'summit', 'panda', 'willow', 'ember'];
+
+  function randInt(n) {
+    const a = new Uint32Array(1);
+    crypto.getRandomValues(a);
+    return a[0] % n;
+  }
+  function newCode() {
+    return `${ADJ[randInt(ADJ.length)]}-${NOUN[randInt(NOUN.length)]}-${100 + randInt(900)}`;
+  }
+  function cleanCode(s) {
+    return String(s || '').toLowerCase().trim()
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40).replace(/-+$/, '');
+  }
+  function parseCodeInput(s) {
+    const m = /room=([^&\s]+)/.exec(String(s || ''));
+    let raw = s;
+    if (m) { try { raw = decodeURIComponent(m[1]); } catch (_) { raw = m[1]; } }
+    return cleanCode(raw);
+  }
+  function readInvite() {
+    return parseCodeInput(location.hash);
+  }
+  function slotId(i) { return `${PREFIX}${state.room}-${i}`; }
+  function isRoomPeer(id) {
+    return typeof id === 'string' && id.startsWith(`${PREFIX}${state.room}-`) && id !== state.myId;
+  }
+  function cleanName(s) {
+    return typeof s === 'string' ? s.replace(/\s+/g, ' ').trim().slice(0, 30) : '';
+  }
+
+  const HUES = ['#FFC93C', '#8FD3FF', '#B9F2A1', '#FFB3C7', '#C9B8FF', '#FFD8A8'];
+  function colorFor(s) {
+    let h = 0;
+    for (const ch of String(s || '')) h = (h * 31 + ch.codePointAt(0)) >>> 0;
+    return HUES[h % HUES.length];
+  }
+  function initial(name) {
+    const c = Array.from(String(name || '').trim())[0];
+    return c ? c.toUpperCase() : '?';
+  }
+
+  /* ---------- Home screen ---------- */
+
+  function renderHome() {
+    if (!el.name.value) el.name.value = store.get('fc-name') || '';
+    const invite = readInvite();
+    el.invited.hidden = !invite;
+    el.normal.hidden = !!invite;
+    el.invitedCode.textContent = invite;
+    const last = store.get('fc-last');
+    el.rejoinBtn.hidden = !last;
+    el.rejoinCode.textContent = last || '';
+    el.secureWarn.hidden = window.isSecureContext && location.protocol !== 'file:';
+  }
+
+  function showHomeMsg(text) { el.homeMsg.textContent = text || ''; }
+
+  function setHomeBusy(text) {
+    const busy = !!text;
+    [el.start, el.join, el.joinInvite, el.rejoinBtn].forEach((b) => { b.disabled = busy; });
+    showHomeMsg(text || '');
+  }
+
+  function getName() {
+    const n = cleanName(el.name.value);
+    if (!n) {
+      showHomeMsg('Add your name so everyone knows who is calling.');
+      el.name.focus();
+      return null;
+    }
+    store.set('fc-name', n);
+    return n;
+  }
+
+  function showHome() {
+    el.call.hidden = true;
+    el.home.hidden = false;
+    renderHome();
+  }
+
+  /* ---------- Joining ---------- */
+
+  function videoConstraints(facing) {
+    return { facingMode: facing, width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 24, max: 30 } };
+  }
+
+  async function getMedia() {
+    const audio = { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
+    try {
+      const s = await navigator.mediaDevices.getUserMedia({ audio, video: videoConstraints(state.facing) });
+      state.hasCam = true;
+      return s;
+    } catch (err) {
+      const n = err && err.name;
+      if (n === 'NotFoundError' || n === 'OverconstrainedError' || n === 'NotReadableError') {
+        const s = await navigator.mediaDevices.getUserMedia({ audio });
+        state.hasCam = false;
+        state.camOn = false;
+        return s;
+      }
+      throw err;
+    }
+  }
+
+  function mediaError(err) {
+    const n = err && err.name;
+    if (n === 'NotAllowedError' || n === 'SecurityError') {
+      return 'Camera and microphone are blocked. Allow them for this site in your browser settings, then try again.';
+    }
+    if (n === 'NotFoundError') return 'No microphone was found on this device.';
+    if (n === 'NotReadableError') return 'Another app is using your microphone. Close it, then try again.';
+    return 'Your camera and microphone could not be turned on. Try again.';
+  }
+
+  async function joinRoom(rawCode) {
+    if (state.joining || state.inCall) return;
+    const name = getName();
+    if (!name) return;
+    const code = cleanCode(rawCode);
+    if (!code) {
+      showHomeMsg('Enter the call code your sibling sent you.');
+      el.code.focus();
+      return;
+    }
+    if (typeof window.Peer !== 'function') {
+      showHomeMsg('The calling tools did not load. Check your internet connection, then reload the page.');
+      return;
+    }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      showHomeMsg('This browser cannot use the camera here. Open the https:// link in Safari or Chrome.');
+      return;
+    }
+
+    const token = ++state.session;
+    state.joining = true;
+    setHomeBusy('Turning on your camera…');
+
+    try {
+      state.stream = await getMedia();
+    } catch (err) {
+      state.joining = false;
+      setHomeBusy(null);
+      showHomeMsg(mediaError(err));
+      return;
+    }
+    if (token !== state.session) { stopStream(state.stream); state.stream = null; return; }
+
+    state.name = name;
+    state.room = code;
+    state.inCall = true;
+    state.everHadPeers = false;
+    enterCallUI();
+
+    try {
+      await claimSlot(token);
+    } catch (err) {
+      if (token !== state.session) return;
+      const msg = err && err.type === 'full'
+        ? `This call already has ${MAX_PEOPLE} people.`
+        : 'The call server could not be reached. Check your internet connection and try again.';
+      leaveCall();
+      showHomeMsg(msg);
+      return;
+    }
+
+    state.joining = false;
+    state.joinedAt = Date.now();
+    store.set('fc-last', code);
+    history.replaceState(null, '', '#room=' + encodeURIComponent(code));
+    setStatus();
+    layout();
+    scan();
+    state.timers.push(setInterval(scan, 6000), setInterval(heartbeat, 4000));
+    keepAwake();
+  }
+
+  function tryClaim(id) {
+    return new Promise((resolve, reject) => {
+      let p;
+      try { p = new window.Peer(id, { debug: 0 }); } catch (e) { reject(e); return; }
+      let done = false;
+      const timer = setTimeout(() => {
+        if (done) return;
+        done = true;
+        try { p.destroy(); } catch (_) {}
+        reject({ type: 'timeout' });
+      }, 15000);
+      p.on('open', () => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        resolve(p);
+      });
+      p.on('error', (err) => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        try { p.destroy(); } catch (_) {}
+        reject(err);
+      });
+    });
+  }
+
+  // Each person takes the first free numbered spot in the room, then
+  // connects to every other spot. No central room list is needed.
+  async function claimSlot(token) {
+    for (let i = 0; i < MAX_PEOPLE; i++) {
+      if (token !== state.session) throw { type: 'cancelled' };
+      const id = slotId(i);
+      let p;
+      try {
+        p = await tryClaim(id);
+      } catch (err) {
+        if (err && err.type === 'unavailable-id') continue;
+        throw err;
+      }
+      if (token !== state.session) { try { p.destroy(); } catch (_) {} throw { type: 'cancelled' }; }
+      state.peer = p;
+      state.myId = id;
+      state.slot = i;
+      wirePeer(p);
+      return;
+    }
+    throw { type: 'full' };
+  }
+
+  let reconnectTimer = null;
+  function scheduleReconnect(p) {
+    if (reconnectTimer) return;
+    reconnectTimer = setTimeout(() => {
+      reconnectTimer = null;
+      if (p !== state.peer || p.destroyed) return;
+      if (!p.disconnected) { hideBanner(); return; }
+      try { p.reconnect(); } catch (_) {}
+      scheduleReconnect(p);
+    }, 3000);
+  }
+
+  function wirePeer(p) {
+    p.on('connection', (conn) => { if (p === state.peer) adoptConn(conn, false); else try { conn.close(); } catch (_) {} });
+    p.on('call', (call) => { if (p === state.peer) answerCall(call); else try { call.close(); } catch (_) {} });
+    p.on('open', () => { if (p === state.peer) { hideBanner(); scan(); } });
+    p.on('disconnected', () => {
+      if (p !== state.peer || p.destroyed) return;
+      showBanner('Reconnecting…');
+      scheduleReconnect(p);
+    });
+    p.on('error', (err) => {
+      if (p !== state.peer) return;
+      const type = err && err.type;
+      if (type === 'peer-unavailable') {
+        const m = /(fc-[a-z0-9-]+)/.exec((err && err.message) || '');
+        if (m) dropPending(m[1]);
+        return;
+      }
+      if (type === 'unavailable-id') {
+        showBanner('You lost your spot. Leave and join again.');
+        return;
+      }
+      if (['network', 'server-error', 'socket-error', 'socket-closed', 'disconnected'].includes(type)) {
+        showBanner('Reconnecting…');
+        scheduleReconnect(p);
+        return;
+      }
+      console.warn('Call error:', type, err);
+    });
+  }
+
+  /* ---------- Finding and connecting to others ---------- */
+
+  function scan() {
+    const p = state.peer;
+    if (!p || p.destroyed || p.disconnected || !state.inCall) return;
+    for (let i = 0; i < MAX_PEOPLE; i++) {
+      if (i === state.slot) continue;
+      const id = slotId(i);
+      if (state.peers.has(id) || state.pending.has(id)) continue;
+      let conn;
+      try { conn = p.connect(id, { reliable: true }); } catch (_) { continue; }
+      if (!conn) continue;
+      state.pending.set(id, conn);
+      const clear = () => { if (state.pending.get(id) === conn) state.pending.delete(id); };
+      const timer = setTimeout(() => {
+        if (state.pending.get(id) === conn) {
+          state.pending.delete(id);
+          try { conn.close(); } catch (_) {}
+        }
+      }, 10000);
+      conn.on('open', () => {
+        clearTimeout(timer);
+        clear();
+        if (p === state.peer) adoptConn(conn, true);
+        else try { conn.close(); } catch (_) {}
+      });
+      conn.on('error', () => { clearTimeout(timer); clear(); });
+      conn.on('close', () => { clearTimeout(timer); clear(); });
+    }
+  }
+
+  function dropPending(id) {
+    const c = state.pending.get(id);
+    if (!c) return;
+    state.pending.delete(id);
+    try { c.close(); } catch (_) {}
+  }
+
+  function ensureEntry(id) {
+    let e = state.peers.get(id);
+    if (!e) {
+      e = {
+        id, name: '', conn: null, connOut: false, call: null, stream: null,
+        mic: true, cam: true, lastSeen: Date.now(), tile: null, leaveTimer: null, greeted: false
+      };
+      state.peers.set(id, e);
+    }
+    return e;
+  }
+  function live(e) { return state.peers.get(e.id) === e; }
+
+  function adoptConn(conn, outgoing) {
+    const id = conn.peer;
+    if (!isRoomPeer(id)) { try { conn.close(); } catch (_) {} return; }
+    const e = ensureEntry(id);
+    if (e.conn && e.conn !== conn) {
+      // Both sides connected at once: keep the one started by the lower id.
+      const initiator = outgoing ? state.myId : id;
+      const currentInitiator = e.connOut ? state.myId : id;
+      const lower = state.myId < id ? state.myId : id;
+      const keepNew = initiator === currentInitiator || initiator === lower;
+      if (keepNew) {
+        const old = e.conn;
+        e.conn = null;
+        try { old.close(); } catch (_) {}
+      } else {
+        try { conn.close(); } catch (_) {}
+        return;
+      }
+    }
+    e.conn = conn;
+    e.connOut = outgoing;
+    clearTimeout(e.leaveTimer);
+    e.leaveTimer = null;
+    conn.on('data', (d) => onData(e, conn, d));
+    conn.on('close', () => onConnClose(e, conn));
+    conn.on('error', () => onConnClose(e, conn));
+    if (conn.open) onConnOpen(e, conn);
+    else conn.on('open', () => onConnOpen(e, conn));
+  }
+
+  function send(conn, msg) {
+    try { if (conn && conn.open) conn.send(msg); } catch (_) {}
+  }
+  function broadcast(msg) {
+    for (const e of state.peers.values()) send(e.conn, msg);
+  }
+  function myState() {
+    return { mic: state.micOn, cam: state.camOn && state.hasCam };
+  }
+
+  function onConnOpen(e, conn) {
+    if (!live(e) || e.conn !== conn) return;
+    e.lastSeen = Date.now();
+    send(conn, Object.assign({ t: 'hello', name: state.name }, myState()));
+    ensureTile(e);
+    layout();
+    setStatus();
+    // Only the lower id starts the video call, so each pair connects once.
+    if (state.myId < e.id && !e.call) startCall(e);
+  }
+
+  function onData(e, conn, d) {
+    if (!live(e) || e.conn !== conn) return;
+    e.lastSeen = Date.now();
+    if (!d || typeof d !== 'object') return;
+    if (d.t === 'hello') {
+      e.name = cleanName(d.name);
+      if (typeof d.mic === 'boolean') e.mic = d.mic;
+      if (typeof d.cam === 'boolean') e.cam = d.cam;
+      updateTile(e);
+      if (!e.greeted) {
+        e.greeted = true;
+        if (e.name && Date.now() - state.joinedAt > 4000) toast(`${e.name} joined`);
+      }
+    } else if (d.t === 'state') {
+      if (typeof d.mic === 'boolean') e.mic = d.mic;
+      if (typeof d.cam === 'boolean') e.cam = d.cam;
+      updateTile(e);
+    } else if (d.t === 'bye') {
+      removeEntry(e, true);
+    }
+  }
+
+  function onConnClose(e, conn) {
+    if (!live(e) || e.conn !== conn) return;
+    e.conn = null;
+    clearTimeout(e.leaveTimer);
+    e.leaveTimer = setTimeout(() => {
+      if (live(e) && !e.conn) removeEntry(e, true);
+    }, 2500);
+  }
+
+  function startCall(e) {
+    if (!state.peer || !state.stream) return;
+    let call;
+    try {
+      call = state.peer.call(e.id, state.stream, {
+        constraints: { offerToReceiveAudio: true, offerToReceiveVideo: true }
+      });
+    } catch (_) { return; }
+    if (call) attachCall(e, call);
+  }
+
+  function answerCall(call) {
+    const id = call.peer;
+    if (!isRoomPeer(id) || !state.stream) { try { call.close(); } catch (_) {} return; }
+    const e = ensureEntry(id);
+    if (e.call && e.call !== call) {
+      const old = e.call;
+      e.call = null;
+      try { old.close(); } catch (_) {}
+    }
+    try { call.answer(state.stream); } catch (_) { return; }
+    attachCall(e, call);
+    ensureTile(e);
+    layout();
+    setStatus();
+  }
+
+  function attachCall(e, call) {
+    e.call = call;
+    call.on('stream', (stream) => {
+      if (!live(e) || e.call !== call) return;
+      e.stream = stream;
+      showStream(e, stream);
+      tuneBitrate();
+    });
+    call.on('close', () => { if (e.call === call) e.call = null; });
+    call.on('error', () => { if (e.call === call) e.call = null; });
+    const pc = call.peerConnection;
+    if (pc && pc.addEventListener) {
+      pc.addEventListener('iceconnectionstatechange', () => {
+        if (e.call !== call) return;
+        if (pc.iceConnectionState === 'failed') {
+          e.call = null;
+          try { call.close(); } catch (_) {}
+          // heartbeat() will start a fresh call from the lower id
+        }
+      });
+    }
+  }
+
+  function heartbeat() {
+    const now = Date.now();
+    for (const e of [...state.peers.values()]) {
+      if (e.conn && e.conn.open) send(e.conn, { t: 'ping' });
+      if (now - e.lastSeen > 15000) { removeEntry(e, true); continue; }
+      const pc = e.call && e.call.peerConnection;
+      if (pc && (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'closed')) {
+        const k = e.call;
+        e.call = null;
+        try { k.close(); } catch (_) {}
+      }
+      if (!e.call && e.conn && e.conn.open && state.myId < e.id) startCall(e);
+    }
+  }
+
+  function removeEntry(e, announce) {
+    if (!live(e)) return;
+    state.peers.delete(e.id);
+    clearTimeout(e.leaveTimer);
+    const c = e.conn, k = e.call;
+    e.conn = null;
+    e.call = null;
+    try { if (c) c.close(); } catch (_) {}
+    try { if (k) k.close(); } catch (_) {}
+    if (e.tile) {
+      e.tile.video.srcObject = null;
+      e.tile.root.remove();
+      e.tile = null;
+    }
+    if (announce && e.name && state.inCall) toast(`${e.name} left`);
+    layout();
+    setStatus();
+    tuneBitrate();
+  }
+
+  // Lower video quality a bit as more people join, so phones keep up.
+  function tuneBitrate() {
+    const n = countTiles();
+    const max = n <= 1 ? 900000 : n === 2 ? 600000 : 350000;
+    for (const e of state.peers.values()) {
+      const pc = e.call && e.call.peerConnection;
+      if (!pc || !pc.getSenders) continue;
+      for (const s of pc.getSenders()) {
+        if (!s.track || s.track.kind !== 'video' || !s.getParameters) continue;
+        try {
+          const params = s.getParameters();
+          if (!params.encodings || !params.encodings.length) continue;
+          if (params.encodings[0].maxBitrate === max) continue;
+          params.encodings[0].maxBitrate = max;
+          s.setParameters(params).catch(() => {});
+        } catch (_) {}
+      }
+    }
+  }
+
+  /* ---------- Call screen ---------- */
+
+  function enterCallUI() {
+    el.home.hidden = true;
+    el.call.hidden = false;
+    el.meVideo.muted = true;
+    el.meVideo.srcObject = state.stream;
+    el.meVideo.play().catch(() => {});
+    el.roomCode.textContent = state.room;
+    setHomeBusy(null);
+    setStatus('Connecting…');
+    renderControls();
+    renderMe();
+    checkCameras();
+    layout();
+    if (!state.hasCam) toast('Your camera is not available, so you joined with audio only.');
+  }
+
+  function countTiles() {
+    let n = 0;
+    for (const e of state.peers.values()) if (e.tile) n++;
+    return n;
+  }
+
+  function setStatus(text) {
+    if (text) { el.count.textContent = text; return; }
+    const n = countTiles() + 1;
+    el.count.textContent = n === 1 ? 'Just you' : `${n} people`;
+  }
+
+  function layout() {
+    const n = countTiles();
+    if (n > 0) state.everHadPeers = true;
+    el.call.classList.toggle('alone', n === 0);
+    el.stage.classList.toggle('solo', n === 1);
+    el.waiting.hidden = n !== 0 || !state.peer || state.joining;
+    el.waitTitle.textContent = state.everHadPeers ? 'Everyone else has left' : "You're the first one here";
+    el.waitBody.textContent = state.everHadPeers
+      ? 'Invite someone to keep talking, or leave the call.'
+      : "Send the invite to your siblings. They'll show up here when they join.";
+    const portrait = window.innerHeight >= window.innerWidth;
+    let cols = 1;
+    if (n >= 2) cols = portrait ? (n <= 2 ? 1 : 2) : (n <= 3 ? n : Math.ceil(n / 2));
+    el.stage.style.setProperty('--cols', cols);
+  }
+
+  function ensureTile(e) {
+    if (e.tile) return e.tile;
+    const root = document.createElement('div');
+    root.className = 'tile';
+    const video = document.createElement('video');
+    video.autoplay = true;
+    video.playsInline = true;
+    video.setAttribute('playsinline', '');
+    const av = document.createElement('div');
+    av.className = 'avatar';
+    const circle = document.createElement('span');
+    av.appendChild(circle);
+    const status = document.createElement('div');
+    status.className = 'tile-status';
+    const tag = document.createElement('div');
+    tag.className = 'tag';
+    const muted = document.createElement('span');
+    muted.className = 'muted';
+    muted.innerHTML = icon('micOff', 16);
+    muted.setAttribute('aria-label', 'Muted');
+    const nm = document.createElement('span');
+    nm.className = 'nm';
+    tag.append(muted, nm);
+    root.append(video, av, status, tag);
+    el.stage.appendChild(root);
+    e.tile = { root, video, av, circle, status, muted, nm };
+    updateTile(e);
+    return e.tile;
+  }
+
+  function updateTile(e) {
+    const t = e.tile;
+    if (!t) return;
+    t.nm.textContent = e.name || 'Joining…';
+    t.circle.textContent = initial(e.name);
+    t.circle.style.background = colorFor(e.name || e.id);
+    t.muted.hidden = e.mic !== false;
+    const hasVideo = !!e.stream && e.stream.getVideoTracks().length > 0 && e.cam !== false;
+    t.av.hidden = hasVideo;
+    t.video.style.visibility = hasVideo ? 'visible' : 'hidden';
+    t.status.textContent = e.stream ? '' : 'Connecting…';
+    t.status.hidden = !!e.stream;
+  }
+
+  function showStream(e, stream) {
+    const t = ensureTile(e);
+    if (t.video.srcObject !== stream) t.video.srcObject = stream;
+    playVideo(t.video);
+    updateTile(e);
+    layout();
+  }
+
+  function playVideo(v) {
+    const p = v.play();
+    if (p && p.catch) p.catch(() => { el.soundBtn.hidden = false; });
+  }
+
+  function renderControls() {
+    setCtl(el.micBtn, !state.micOn, state.micOn ? 'mic' : 'micOff', state.micOn ? 'Mute' : 'Unmute');
+    setCtl(el.camBtn, !state.camOn, state.camOn ? 'cam' : 'camOff', state.camOn ? 'Stop video' : 'Start video');
+    el.flipBtn.querySelector('.ic').innerHTML = icon('flip');
+    el.leaveBtn.querySelector('.ic').innerHTML = icon('leave', 30);
+  }
+  function setCtl(btn, off, ic, label) {
+    btn.dataset.off = String(off);
+    btn.querySelector('.ic').innerHTML = icon(ic);
+    btn.querySelector('.lbl').textContent = label;
+    btn.setAttribute('aria-label', label);
+  }
+
+  function renderMe() {
+    el.meVideo.classList.toggle('mirror', state.facing === 'user');
+    const showVideo = state.hasCam && state.camOn;
+    el.meVideo.style.visibility = showVideo ? 'visible' : 'hidden';
+    el.meAvatar.hidden = showVideo;
+    el.meCircle.textContent = initial(state.name);
+    el.meCircle.style.background = colorFor(state.name);
+  }
+
+  async function checkCameras() {
+    if (!state.hasCam) { el.flipBtn.hidden = true; return; }
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      el.flipBtn.hidden = devices.filter((d) => d.kind === 'videoinput').length < 2;
+    } catch (_) {
+      el.flipBtn.hidden = true;
+    }
+  }
+
+  function toggleMic() {
+    if (!state.stream) return;
+    state.micOn = !state.micOn;
+    state.stream.getAudioTracks().forEach((t) => { t.enabled = state.micOn; });
+    renderControls();
+    broadcast(Object.assign({ t: 'state' }, myState()));
+  }
+
+  function toggleCam() {
+    if (!state.stream) return;
+    if (!state.hasCam) { toast('No camera is available on this device.'); return; }
+    state.camOn = !state.camOn;
+    state.stream.getVideoTracks().forEach((t) => { t.enabled = state.camOn; });
+    renderControls();
+    renderMe();
+    broadcast(Object.assign({ t: 'state' }, myState()));
+  }
+
+  let flipping = false;
+  async function flipCamera() {
+    if (flipping || !state.hasCam || !state.stream) return;
+    flipping = true;
+    const next = state.facing === 'user' ? 'environment' : 'user';
+    const old = state.stream.getVideoTracks()[0];
+    try {
+      if (old) old.stop(); // phones can only open one camera at a time
+      let ns;
+      try {
+        ns = await navigator.mediaDevices.getUserMedia({ video: Object.assign(videoConstraints(next), { facingMode: { exact: next } }) });
+      } catch (_) {
+        ns = await navigator.mediaDevices.getUserMedia({ video: videoConstraints(next) });
+      }
+      state.facing = next;
+      await swapVideoTrack(old, ns.getVideoTracks()[0]);
+    } catch (_) {
+      try {
+        const ns = await navigator.mediaDevices.getUserMedia({ video: videoConstraints(state.facing) });
+        await swapVideoTrack(old, ns.getVideoTracks()[0]);
+      } catch (__) {}
+      toast('The camera could not be switched.');
+    } finally {
+      flipping = false;
+      renderMe();
+    }
+  }
+
+  async function swapVideoTrack(old, track) {
+    if (!track || !state.stream) return;
+    track.enabled = state.camOn;
+    if (old) state.stream.removeTrack(old);
+    state.stream.addTrack(track);
+    el.meVideo.srcObject = state.stream;
+    el.meVideo.play().catch(() => {});
+    for (const e of state.peers.values()) {
+      const pc = e.call && e.call.peerConnection;
+      if (!pc || !pc.getSenders) continue;
+      const sender = pc.getSenders().find((s) => s.track && s.track.kind === 'video');
+      if (sender) { try { await sender.replaceTrack(track); } catch (_) {} }
+    }
+    tuneBitrate();
+  }
+
+  function inviteUrl() {
+    return location.href.split('#')[0] + '#room=' + encodeURIComponent(state.room);
+  }
+
+  async function invite() {
+    const url = inviteUrl();
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: APP_NAME, text: `${state.name} is calling. Tap to join the video call:`, url });
+        return;
+      } catch (err) {
+        if (err && err.name === 'AbortError') return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast('Invite link copied. Paste it into a text.');
+    } catch (_) {
+      window.prompt('Copy this link and send it:', url);
+    }
+  }
+
+  function stopStream(s) {
+    if (s) s.getTracks().forEach((t) => { try { t.stop(); } catch (_) {} });
+  }
+
+  function leaveCall() {
+    state.session++;
+    broadcast({ t: 'bye' });
+
+    state.timers.forEach(clearInterval);
+    state.timers = [];
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+
+    const entries = [...state.peers.values()];
+    const pending = [...state.pending.values()];
+    const p = state.peer;
+    state.peers.clear();
+    state.pending.clear();
+    state.peer = null;
+
+    entries.forEach((e) => {
+      clearTimeout(e.leaveTimer);
+      if (e.tile) { e.tile.video.srcObject = null; e.tile.root.remove(); e.tile = null; }
+    });
+    // Give the goodbye message a moment to go out before hanging up.
+    setTimeout(() => {
+      entries.forEach((e) => {
+        try { if (e.conn) e.conn.close(); } catch (_) {}
+        try { if (e.call) e.call.close(); } catch (_) {}
+      });
+      pending.forEach((c) => { try { c.close(); } catch (_) {} });
+      try { if (p) p.destroy(); } catch (_) {}
+    }, 300);
+
+    stopStream(state.stream);
+    state.stream = null;
+    el.meVideo.srcObject = null;
+    releaseWake();
+    hideBanner();
+    el.soundBtn.hidden = true;
+
+    Object.assign(state, {
+      inCall: false, joining: false, myId: '', slot: -1,
+      micOn: true, camOn: true, hasCam: true, facing: 'user', everHadPeers: false
+    });
+    history.replaceState(null, '', location.pathname + location.search);
+    showHome();
+  }
+
+  /* ---------- Small helpers ---------- */
+
+  let toastTimer = null;
+  function toast(msg) {
+    el.toast.textContent = msg;
+    el.toast.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { el.toast.hidden = true; }, 3200);
+  }
+  function showBanner(text) { el.banner.textContent = text; el.banner.hidden = false; }
+  function hideBanner() { el.banner.hidden = true; }
+
+  async function keepAwake() {
+    try {
+      if ('wakeLock' in navigator && state.inCall && !state.wakeLock) {
+        const lock = await navigator.wakeLock.request('screen');
+        state.wakeLock = lock;
+        lock.addEventListener('release', () => { if (state.wakeLock === lock) state.wakeLock = null; });
+      }
+    } catch (_) {}
+  }
+  function releaseWake() {
+    try { if (state.wakeLock) state.wakeLock.release(); } catch (_) {}
+    state.wakeLock = null;
+  }
+
+  /* ---------- Wiring ---------- */
+
+  el.start.addEventListener('click', () => joinRoom(newCode()));
+  el.join.addEventListener('click', () => joinRoom(parseCodeInput(el.code.value)));
+  el.code.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') joinRoom(parseCodeInput(el.code.value)); });
+  el.name.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') el.name.blur(); });
+  el.joinInvite.addEventListener('click', () => joinRoom(readInvite()));
+  el.rejoinBtn.addEventListener('click', () => joinRoom(store.get('fc-last')));
+  el.notInvited.addEventListener('click', () => {
+    history.replaceState(null, '', location.pathname + location.search);
+    renderHome();
+  });
+
+  el.inviteBtn.addEventListener('click', invite);
+  el.waitInvite.addEventListener('click', invite);
+  el.micBtn.addEventListener('click', toggleMic);
+  el.camBtn.addEventListener('click', toggleCam);
+  el.flipBtn.addEventListener('click', flipCamera);
+  el.leaveBtn.addEventListener('click', leaveCall);
+  el.soundBtn.addEventListener('click', () => {
+    el.soundBtn.hidden = true;
+    el.stage.querySelectorAll('video').forEach(playVideo);
+  });
+
+  window.addEventListener('resize', () => { if (state.inCall) layout(); });
+  window.addEventListener('hashchange', () => { if (!state.inCall) renderHome(); });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible' || !state.inCall) return;
+    keepAwake();
+    if (state.peer && state.peer.disconnected) scheduleReconnect(state.peer);
+    scan();
+    el.meVideo.play().catch(() => {});
+    el.stage.querySelectorAll('video').forEach(playVideo);
+  });
+  window.addEventListener('pagehide', () => {
+    if (!state.inCall) return;
+    broadcast({ t: 'bye' });
+  });
+
+  renderHome();
+})();
+</script>
+</body>
+</html>
