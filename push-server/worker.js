@@ -1,21 +1,29 @@
-// Hawk Talk push server: a Cloudflare Worker that sends "is calling" notifications.
-// It has no dependencies, so it can be pasted straight into the Cloudflare dashboard.
-// Needs one KV namespace bound as HAWK. See the "Call notifications" part of README.md.
+// Hawk Talk push server: a Cloudflare Worker that sends "is calling" notifications and
+// stores the family chat. It has no dependencies, so it can be pasted straight into the
+// Cloudflare dashboard. Needs a KV namespace bound as HAWK, and for the family chat a D1
+// database bound as DB. See CLOUDFLARE_SETUP.md.
 //
 // A family code is the shared secret: anyone who knows it can see the names in the
-// family and ring them, so pick one that is hard to guess.
+// family, ring them and read the chat, so pick one that is hard to guess. Chat messages
+// are encrypted on the phones with a key made from the family code, so this server only
+// ever stores scrambled text.
 
 // Bump this when the server code changes, and note it in CHANGELOG.md. The address's
 // home page shows it, so you can check the deployed copy is up to date.
-const VERSION = '1.1.0';
+const VERSION = '1.2.0';
 const MAX_MEMBERS = 30;
 const RING_TTL = 90;      // seconds a ring waits for an offline phone before it's dropped
 const TEST_TTL = 600;
+const CHAT_TTL = 86400;   // seconds a chat notification waits for an offline phone
+const CHAT_PAGE = 50;
+const CHAT_MAX_PAGE = 100;
+const CHAT_MAX_BODY = 8000;
+const CHAT_PUSH_MAX = 3000; // longer messages are announced without their text, to fit in a push
 // Who to contact about this server, sent to Apple/Google with each push.
 const DEFAULT_SUBJECT = 'https://github.com/WesHawksly/HawkTalk';
 
 export default {
-  async fetch(req, env) {
+  async fetch(req, env, ctx) {
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
     try {
       if (!env.HAWK) return json({ error: 'The HAWK KV namespace is not bound to this worker.' }, 500);
@@ -23,7 +31,7 @@ export default {
       if (req.method === 'GET' && path === '/key') {
         return json({ key: (await vapidKeys(env)).publicKey });
       }
-      if (req.method === 'GET' && path === '') return json({ ok: true, app: 'Hawk Talk push server', version: VERSION });
+      if (req.method === 'GET' && path === '') return json({ ok: true, app: 'Hawk Talk push server', version: VERSION, chat: !!env.DB });
       if (req.method !== 'POST') return json({ error: 'Not found' }, 404);
 
       const body = await req.json().catch(() => null);
@@ -35,6 +43,8 @@ export default {
       if (path === '/unsubscribe') return await unsubscribe(env, fam, body);
       if (path === '/members') return json({ members: await members(env, fam) });
       if (path === '/ring') return await ring(env, fam, body);
+      if (path === '/chat/send') return await chatSend(env, ctx, fam, body);
+      if (path === '/chat/list') return await chatList(env, fam, body);
       return json({ error: 'Not found' }, 404);
     } catch (err) {
       return json({ error: String((err && err.message) || err) }, 500);
@@ -142,27 +152,96 @@ async function ring(env, fam, body) {
     .filter((m) => m.id !== from.id && (!only || only.has(m.id)));
 
   const payload = { t: 'ring', from: fromName, room };
-  const results = await Promise.all(targets.map(async (m) => {
-    const key = memberKey(fam, m.id);
-    const raw = await env.HAWK.get(key);
-    if (!raw) return { name: m.name, status: 'gone' };
-    let r;
-    try {
-      r = await sendPush(env, JSON.parse(raw).sub, payload, RING_TTL);
-    } catch (_) {
-      return { name: m.name, status: 'failed' };
-    }
-    if (r.status === 404 || r.status === 410) {
-      // The phone unsubscribed or the app was removed: forget it.
-      await env.HAWK.delete(key);
-      return { name: m.name, status: 'gone' };
-    }
-    return { name: m.name, status: r.ok ? 'sent' : 'failed' };
-  }));
+  const results = await Promise.all(targets.map(async (m) => (
+    { name: m.name, status: await pushMember(env, fam, m.id, payload, RING_TTL) }
+  )));
 
   return json({
     sent: results.filter((r) => r.status === 'sent').map((r) => r.name),
     failed: results.filter((r) => r.status === 'failed').map((r) => r.name)
+  });
+}
+
+// Returns 'sent', 'failed', or 'gone' when the phone no longer gets notifications.
+async function pushMember(env, fam, id, payload, ttl) {
+  const key = memberKey(fam, id);
+  const raw = await env.HAWK.get(key);
+  if (!raw) return 'gone';
+  let r;
+  try {
+    r = await sendPush(env, JSON.parse(raw).sub, payload, ttl);
+  } catch (_) {
+    return 'failed';
+  }
+  if (r.status === 404 || r.status === 410) {
+    // The phone unsubscribed or the app was removed: forget it.
+    await env.HAWK.delete(key);
+    return 'gone';
+  }
+  return r.ok ? 'sent' : 'failed';
+}
+
+/* ---------- Family chat ---------- */
+
+const NO_DB = 'Family chat needs a D1 database bound to this worker as DB. See CLOUDFLARE_SETUP.md.';
+
+// The table is made automatically the first time chat is used.
+let schemaReady = null;
+async function chatDb(env) {
+  if (!env.DB) return null;
+  if (!schemaReady) {
+    schemaReady = env.DB.batch([
+      env.DB.prepare('CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTOINCREMENT, fam TEXT NOT NULL, ts INTEGER NOT NULL, sender TEXT NOT NULL, body TEXT NOT NULL)'),
+      env.DB.prepare('CREATE INDEX IF NOT EXISTS messages_fam ON messages (fam, id)')
+    ]).catch((err) => { schemaReady = null; throw err; });
+  }
+  await schemaReady;
+  return env.DB;
+}
+
+async function chatSend(env, ctx, fam, body) {
+  const db = await chatDb(env);
+  if (!db) return json({ error: NO_DB }, 500);
+  const c = body.c;
+  if (!validId(body.id) || typeof c !== 'string' || !c || c.length > CHAT_MAX_BODY || !/^[A-Za-z0-9_-]+$/.test(c)) {
+    return json({ error: 'Bad message' }, 400);
+  }
+  const ts = Date.now();
+  const row = await db.prepare('INSERT INTO messages (fam, ts, sender, body) VALUES (?, ?, ?, ?) RETURNING id')
+    .bind(fam, ts, body.id, c).first();
+  ctx.waitUntil(notifyChat(env, fam, body.id, c).catch(() => {}));
+  return json({ id: row.id, ts });
+}
+
+async function notifyChat(env, fam, senderId, c) {
+  const list = await members(env, fam);
+  const me = list.find((m) => m.id === senderId);
+  const payload = { t: 'chat', from: (me && me.name) || '' };
+  if (c.length <= CHAT_PUSH_MAX) payload.c = c;
+  await Promise.all(list.filter((m) => m.id !== senderId)
+    .map((m) => pushMember(env, fam, m.id, payload, CHAT_TTL)));
+}
+
+async function chatList(env, fam, body) {
+  const db = await chatDb(env);
+  if (!db) return json({ error: NO_DB }, 500);
+  const limit = Math.min(Math.max(parseInt(body.limit, 10) || CHAT_PAGE, 1), CHAT_MAX_PAGE);
+  const after = Number.isSafeInteger(body.after) && body.after >= 0 ? body.after : null;
+  const before = Number.isSafeInteger(body.before) && body.before > 0 ? body.before : null;
+  let rows;
+  if (after !== null) {
+    rows = (await db.prepare('SELECT id, ts, sender, body FROM messages WHERE fam = ? AND id > ? ORDER BY id LIMIT ?')
+      .bind(fam, after, limit).all()).results;
+  } else if (before !== null) {
+    rows = (await db.prepare('SELECT id, ts, sender, body FROM messages WHERE fam = ? AND id < ? ORDER BY id DESC LIMIT ?')
+      .bind(fam, before, limit).all()).results.reverse();
+  } else {
+    rows = (await db.prepare('SELECT id, ts, sender, body FROM messages WHERE fam = ? ORDER BY id DESC LIMIT ?')
+      .bind(fam, limit).all()).results.reverse();
+  }
+  return json({
+    messages: rows.map((r) => ({ id: r.id, ts: r.ts, from: r.sender, c: r.body })),
+    more: rows.length === limit
   });
 }
 

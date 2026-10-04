@@ -178,6 +178,99 @@
   #familyShown { white-space: nowrap; }
   .notify .text-btn { margin: 6px 0 0; padding-left: 0; }
 
+  .chat-btn { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 28px; }
+  .badge {
+    padding: 1px 9px;
+    border-radius: 999px;
+    background: var(--coral);
+    color: #fff;
+    font-size: .875rem;
+    font-weight: 700;
+  }
+
+  /* ---------- Family chat ---------- */
+  #chat {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+  }
+  .chat-head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: calc(env(safe-area-inset-top, 0px) + 10px) 12px 10px;
+    border-bottom: 2px solid var(--line);
+  }
+  .back {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+  }
+  .chat-title { min-width: 0; flex: 1; display: flex; flex-direction: column; line-height: 1.2; }
+  .chat-title h2 { font-size: 1.25rem; letter-spacing: -0.01em; margin: 0; }
+  .chat-fam { display: flex; align-items: baseline; gap: 8px; font-size: .875rem; color: var(--muted); min-width: 0; }
+  .chat-fam span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .chat-fam .text-btn { margin: 0; padding: 0; font-size: .875rem; color: var(--muted); flex: none; }
+  .chat-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  .chat-inner { max-width: 640px; margin: 0 auto; padding: 8px 12px 12px; }
+  .chat-setup { max-width: 440px; margin: 0 auto; padding: 24px; }
+  .chat-setup label { margin-top: 18px; }
+  .chat-setup .note:first-child { margin-top: 0; }
+  .chat-more { margin: 8px auto 4px; }
+  .chat-day { text-align: center; font-size: .8125rem; font-weight: 600; color: var(--muted); margin: 18px 0 2px; }
+  .chat-row { display: flex; flex-direction: column; align-items: flex-start; margin-top: 3px; }
+  .chat-row.mine { align-items: flex-end; }
+  .chat-who { font-size: .8125rem; font-weight: 600; color: var(--muted); margin: 12px 14px 4px; }
+  .bubble {
+    max-width: min(80%, 480px);
+    padding: 9px 14px;
+    border-radius: 20px;
+    background: var(--field);
+    border: 2px solid var(--line);
+    line-height: 1.4;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .mine .bubble { background: var(--sun); border-color: var(--sun); color: var(--ink); }
+  .bubble.bad { font-style: italic; color: var(--muted); }
+  .chat-msg { flex: none; margin: 0; padding: 0 16px; text-align: center; }
+  .chat-msg:empty { display: none; }
+  .chat-compose {
+    flex: none;
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    padding: 10px 12px calc(env(safe-area-inset-bottom, 0px) + 10px);
+  }
+  .chat-compose textarea {
+    flex: 1;
+    min-width: 0;
+    resize: none;
+    max-height: 140px;
+    padding: 12px 16px;
+    border-radius: 22px;
+    border: 2px solid var(--line);
+    background: var(--field);
+    color: inherit;
+    font: inherit;
+    font-size: 1.0625rem;
+    line-height: 1.35;
+  }
+  .chat-compose textarea:focus { border-color: var(--fg); outline: none; }
+  .chat-compose .secondary { min-height: 50px; border-radius: 999px; }
+
   /* ---------- Call ---------- */
   #call {
     position: fixed;
@@ -501,6 +594,8 @@
       <p class="note">A code works like a meeting spot. Pick one your family always uses, like garcia-kids, and anyone can hop in whenever.</p>
     </div>
 
+    <button class="rejoin chat-btn" id="chatBtn" type="button" hidden><span data-icon="chat" data-size="22"></span>Family chat<span id="chatBadge" class="badge" hidden></span></button>
+
     <div id="notify" class="notify" hidden>
       <h2>Get rung for calls</h2>
       <div id="notifyOff" hidden>
@@ -524,6 +619,39 @@
   <p id="secureWarn" class="warn" hidden>Camera access only works from a secure web address (one starting with https). Upload this file to a free host like Netlify or GitHub Pages, then open it from there.</p>
   <p class="foot note">Works best with up to 6 people.<br><span id="appVersion"></span></p>
 </main>
+
+<section id="chat" hidden aria-label="Family chat">
+  <header class="chat-head">
+    <button class="back" id="chatBack" type="button" aria-label="Back"><span data-icon="back" data-size="24"></span></button>
+    <div class="chat-title">
+      <h2>Family chat</h2>
+      <div class="chat-fam" id="chatFamRow" hidden><span id="chatFamily"></span><button class="text-btn" id="chatChange" type="button">Change</button></div>
+    </div>
+  </header>
+
+  <div id="chatBody" class="chat-body">
+    <div id="chatSetup" class="chat-setup" hidden>
+      <p class="note">Everyone in your family types the same family code to join the chat. If you use call notifications, it's the same code.</p>
+      <label for="chatFamilyInput">Family code</label>
+      <div class="join-row">
+        <input id="chatFamilyInput" type="text" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="e.g. garcia-hawks-4821" enterkeyhint="go">
+        <button class="secondary" id="chatFamilyGo" type="button">Open</button>
+      </div>
+      <p class="note">Messages are scrambled with this code before they leave your phone, so only people who know it can read them. A longer code keeps them safer.</p>
+    </div>
+    <div id="chatLog" class="chat-inner" role="log" aria-label="Messages" hidden>
+      <button class="text-btn chat-more" id="chatMore" type="button" hidden>Load earlier messages</button>
+      <div id="chatList"></div>
+      <p id="chatEmpty" class="note center" hidden>No messages yet. Say hi!</p>
+    </div>
+  </div>
+
+  <p id="chatMsg" class="note chat-msg" role="status" aria-live="polite"></p>
+  <form id="chatForm" class="chat-compose" hidden>
+    <textarea id="chatInput" rows="1" maxlength="1000" placeholder="Message" aria-label="Message" enterkeyhint="send"></textarea>
+    <button class="secondary" id="chatSend" type="submit">Send</button>
+  </form>
+</section>
 
 <section id="call" hidden aria-label="Video call">
   <div id="stage"></div>
@@ -583,7 +711,7 @@
 
   const APP_NAME = 'Hawk Talk';
   // Bump this with each release and add a line to CHANGELOG.md. Shown at the bottom of the home screen.
-  const APP_VERSION = '1.1.0';
+  const APP_VERSION = '1.2.0';
   // Unique to your copy of the app, so your calls never mix with anyone else
   // using the same free connection server. Change it if you ever want a fresh start.
   const PREFIX = 'fc-r8m3tq-';
@@ -603,7 +731,9 @@
     flip: '<path d="M4 12a8 8 0 0 1 13.7-5.7L20 8.5"/><path d="M20 4v4.5h-4.5"/><path d="M20 12a8 8 0 0 1-13.7 5.7L4 15.5"/><path d="M4 20v-4.5h4.5"/>',
     leave: '<path fill="currentColor" stroke="none" d="M12 8.5c-3.6 0-6.9 1.2-9.3 3.3a1.6 1.6 0 0 0-.1 2.3l1.7 1.7a1.6 1.6 0 0 0 2 .2l2.2-1.4a1.6 1.6 0 0 0 .7-1.4v-1.6a12 12 0 0 1 5.6 0v1.6c0 .6.3 1.1.7 1.4l2.2 1.4a1.6 1.6 0 0 0 2-.2l1.7-1.7a1.6 1.6 0 0 0-.1-2.3C18.9 9.7 15.6 8.5 12 8.5z"/>',
     bell: '<path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2.5h-15z"/><path d="M10 21a2 2 0 0 0 4 0"/>',
-    invite: '<circle cx="9" cy="8" r="4"/><path d="M2.5 21a6.5 6.5 0 0 1 13 0"/><path d="M19 8v6M16 11h6"/>'
+    invite: '<circle cx="9" cy="8" r="4"/><path d="M2.5 21a6.5 6.5 0 0 1 13 0"/><path d="M19 8v6M16 11h6"/>',
+    chat: '<path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H9l-5 4z"/>',
+    back: '<path d="M15 5l-7 7 7 7"/>'
   };
   function icon(name, size = 26) {
     return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name]}</svg>`;
@@ -629,7 +759,12 @@
     notify: $('#notify'), notifyOff: $('#notifyOff'), notifyOn: $('#notifyOn'), family: $('#family'),
     notifyOnBtn: $('#notifyOnBtn'), notifyOffBtn: $('#notifyOffBtn'), familyShown: $('#familyShown'), notifyNote: $('#notifyNote'),
     ringBtn: $('#ringBtn'), waitRing: $('#waitRing'), ringSheet: $('#ringSheet'), ringList: $('#ringList'),
-    ringMsg: $('#ringMsg'), ringGo: $('#ringGo'), ringCancel: $('#ringCancel')
+    ringMsg: $('#ringMsg'), ringGo: $('#ringGo'), ringCancel: $('#ringCancel'),
+    chatBtn: $('#chatBtn'), chatBadge: $('#chatBadge'), chat: $('#chat'), chatBack: $('#chatBack'),
+    chatFamRow: $('#chatFamRow'), chatFamily: $('#chatFamily'), chatChange: $('#chatChange'), chatBody: $('#chatBody'),
+    chatSetup: $('#chatSetup'), chatFamilyInput: $('#chatFamilyInput'), chatFamilyGo: $('#chatFamilyGo'),
+    chatLog: $('#chatLog'), chatMore: $('#chatMore'), chatList: $('#chatList'), chatEmpty: $('#chatEmpty'),
+    chatMsg: $('#chatMsg'), chatForm: $('#chatForm'), chatInput: $('#chatInput'), chatSend: $('#chatSend')
   };
 
   const state = {
@@ -682,6 +817,7 @@
     return cleanCode(raw);
   }
   function readInvite() {
+    if (location.hash === '#chat') return '';
     return parseCodeInput(location.hash);
   }
   function slotId(i) { return `${PREFIX}${state.room}-${i}`; }
@@ -716,7 +852,9 @@
     el.rejoinCode.textContent = last || '';
     el.secureWarn.hidden = window.isSecureContext && location.protocol !== 'file:';
     el.appVersion.textContent = `Version ${APP_VERSION}`;
+    el.chatBtn.hidden = !PUSH_SERVER;
     renderNotify();
+    refreshUnread();
   }
 
   function showHomeMsg(text) { el.homeMsg.textContent = text || ''; }
@@ -740,8 +878,17 @@
 
   function showHome() {
     el.call.hidden = true;
+    hideChat();
     el.home.hidden = false;
     renderHome();
+  }
+
+  // The address decides what shows when not in a call: #chat is the family chat,
+  // anything else is the home screen (with an invite, if it has a call code).
+  function route() {
+    if (state.inCall || state.joining) return;
+    if (location.hash === '#chat' && PUSH_SERVER) showChat();
+    else showHome();
   }
 
   /* ---------- Joining ---------- */
@@ -1504,7 +1651,10 @@
     // Tapping a call notification while the app is already open.
     navigator.serviceWorker.addEventListener('message', (ev) => {
       const d = ev.data;
-      if (!d || d.t !== 'open') return;
+      if (!d) return;
+      if (d.t === 'chat') { onChatPush(); return; }
+      if (d.t === 'openChat') { if (!state.inCall && !state.joining) openChat(); return; }
+      if (d.t !== 'open') return;
       const room = cleanCode(d.room);
       if (!room) return;
       if (state.inCall || state.joining) {
@@ -1703,6 +1853,411 @@
     }
   }
 
+  /* ---------- Family chat ---------- */
+
+  // Messages are encrypted here with a key made from the family code, so the server
+  // only stores scrambled text. It never sees the code: it groups messages by a hash.
+  const CHAT_SALT = 'hawktalk-chat-v1';
+  const CHAT_POLL = 4000;
+
+  const chat = {
+    open: false,
+    fam: '',
+    token: 0,
+    items: [],          // decrypted messages, oldest first
+    ids: new Set(),
+    cursor: 0,          // newest id fetched from the server
+    loaded: false,
+    loading: false,
+    polling: false,
+    sending: false,
+    more: false,
+    timer: null
+  };
+
+  function b64uFromBytes(bytes) {
+    let s = '';
+    for (const b of bytes) s += String.fromCharCode(b);
+    return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  function idbPut(k, v) {
+    return new Promise((resolve) => {
+      let req;
+      try { req = indexedDB.open('hawktalk', 1); } catch (_) { resolve(); return; }
+      req.onupgradeneeded = () => req.result.createObjectStore('kv');
+      req.onerror = () => resolve();
+      req.onsuccess = () => {
+        const db = req.result;
+        try {
+          const tx = db.transaction('kv', 'readwrite');
+          if (v === null) tx.objectStore('kv').delete(k); else tx.objectStore('kv').put(v, k);
+          tx.oncomplete = tx.onerror = () => { db.close(); resolve(); };
+        } catch (_) { db.close(); resolve(); }
+      };
+    });
+  }
+
+  let keyCache = null;
+  async function chatKey(fam) {
+    if (keyCache && keyCache.fam === fam) return keyCache.key;
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(fam), 'PBKDF2', false, ['deriveKey']);
+    const key = await crypto.subtle.deriveKey(
+      { name: 'PBKDF2', hash: 'SHA-256', salt: new TextEncoder().encode(CHAT_SALT), iterations: 310000 },
+      base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+    keyCache = { fam, key };
+    // Shared with the service worker, so chat notifications can show the message.
+    idbPut('chatKey', { fam, key });
+    return key;
+  }
+
+  async function encryptMsg(key, m) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(JSON.stringify(m))));
+    const out = new Uint8Array(iv.length + ct.length);
+    out.set(iv, 0);
+    out.set(ct, iv.length);
+    return b64uFromBytes(out);
+  }
+
+  async function decryptMsg(key, c) {
+    try {
+      const bytes = b64uBytes(c);
+      const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: bytes.slice(0, 12) }, key, bytes.slice(12));
+      const m = JSON.parse(new TextDecoder().decode(plain));
+      if (!m || typeof m.x !== 'string') return { bad: true };
+      return { n: cleanName(m.n), x: m.x.slice(0, 1000) };
+    } catch (_) {
+      return { bad: true };
+    }
+  }
+
+  function chatError(err) {
+    if (err instanceof TypeError) return 'The chat could not be reached. Check your internet connection.';
+    return (err && err.message) || 'Something went wrong. Try again.';
+  }
+  function setChatMsg(text) { el.chatMsg.textContent = text || ''; }
+
+  function openChat() {
+    if (location.hash !== '#chat') history.pushState({ chat: true }, '', '#chat');
+    route();
+  }
+
+  function closeChat() {
+    if (history.state && history.state.chat) history.back();
+    else {
+      history.replaceState(null, '', location.pathname + location.search);
+      route();
+    }
+  }
+
+  function resetChat(fam) {
+    chat.token++;
+    Object.assign(chat, { fam, items: [], cursor: 0, loaded: false, loading: false, polling: false, more: false });
+    chat.ids = new Set();
+    el.chatList.textContent = '';
+    el.chatMore.hidden = true;
+    el.chatEmpty.hidden = true;
+    setChatMsg('');
+  }
+
+  function showChat() {
+    el.home.hidden = true;
+    el.call.hidden = true;
+    el.chat.hidden = false;
+    chat.open = true;
+    fitChat();
+    const fam = family();
+    el.chatSetup.hidden = !!fam;
+    el.chatLog.hidden = !fam;
+    el.chatForm.hidden = !fam;
+    el.chatFamRow.hidden = !fam;
+    el.chatFamily.textContent = fam ? `Family ${fam}` : '';
+    clearInterval(chat.timer);
+    chat.timer = null;
+    if (!fam) {
+      resetChat('');
+      el.chatFamilyInput.value = '';
+      return;
+    }
+    if (fam !== chat.fam) resetChat(fam);
+    if (!chat.loaded) loadLatest(); else poll();
+    chat.timer = setInterval(() => { if (chat.loaded) poll(); else loadLatest(); }, CHAT_POLL);
+    closeChatNotifications();
+  }
+
+  function hideChat() {
+    if (!chat.open) return;
+    chat.open = false;
+    el.chat.hidden = true;
+    clearInterval(chat.timer);
+    chat.timer = null;
+  }
+
+  function setChatFamily() {
+    const fam = cleanFamily(el.chatFamilyInput.value);
+    if (fam.length < 6) {
+      setChatMsg('Use a family code with at least 6 letters or numbers.');
+      el.chatFamilyInput.focus();
+      return;
+    }
+    store.set('fc-family', fam);
+    setChatMsg('');
+    showChat();
+  }
+
+  function changeChatFamily() {
+    if (pushOn()) {
+      setChatMsg('To use a different family code, first turn off call notifications on the home screen.');
+      return;
+    }
+    store.set('fc-family', '');
+    store.set('fc-chat-read', '');
+    keyCache = null;
+    idbPut('chatKey', null);
+    showChat();
+  }
+
+  // Keeps the chat above the on-screen keyboard, which iPhones don't make room for.
+  function fitChat() {
+    if (el.chat.hidden || !window.visualViewport) return;
+    const vv = window.visualViewport;
+    const atEnd = nearEnd();
+    el.chat.style.height = `${vv.height}px`;
+    el.chat.style.top = `${vv.offsetTop}px`;
+    if (atEnd) scrollChatToEnd();
+  }
+
+  function nearEnd() {
+    const b = el.chatBody;
+    return b.scrollHeight - b.scrollTop - b.clientHeight < 80;
+  }
+  function scrollChatToEnd() { el.chatBody.scrollTop = el.chatBody.scrollHeight; }
+
+  async function addMessages(list) {
+    const key = await chatKey(chat.fam);
+    let added = 0;
+    for (const m of list || []) {
+      if (!m || !Number.isSafeInteger(m.id) || chat.ids.has(m.id)) continue;
+      chat.ids.add(m.id);
+      chat.items.push(Object.assign({ id: m.id, ts: Number(m.ts) || 0, from: String(m.from || '') }, await decryptMsg(key, m.c)));
+      added++;
+    }
+    chat.items.sort((a, b) => a.id - b.id);
+    return added;
+  }
+  function advanceCursor(list) {
+    for (const m of list || []) if (m && Number.isSafeInteger(m.id) && m.id > chat.cursor) chat.cursor = m.id;
+  }
+
+  function dayLabel(d) {
+    const today = new Date();
+    const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+    if (d.toDateString() === today.toDateString()) return 'Today';
+    if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
+    const opts = { weekday: 'long', month: 'long', day: 'numeric' };
+    if (d.getFullYear() !== today.getFullYear()) opts.year = 'numeric';
+    return d.toLocaleDateString(undefined, opts);
+  }
+  function timeLabel(d) {
+    return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  }
+
+  function renderChatList() {
+    const me = deviceId();
+    const frag = document.createDocumentFragment();
+    let prevDay = '';
+    let prev = null;
+    for (const m of chat.items) {
+      const d = new Date(m.ts);
+      const day = d.toDateString();
+      if (day !== prevDay) {
+        const sep = document.createElement('p');
+        sep.className = 'chat-day';
+        sep.textContent = dayLabel(d);
+        frag.appendChild(sep);
+        prevDay = day;
+        prev = null;
+      }
+      const mine = m.from === me;
+      const row = document.createElement('div');
+      row.className = mine ? 'chat-row mine' : 'chat-row';
+      // Messages sent close together by the same person share one name line.
+      const joined = prev && prev.from === m.from && prev.n === m.n && m.ts - prev.ts < 5 * 60000;
+      if (!joined) {
+        const who = document.createElement('p');
+        who.className = 'chat-who';
+        who.textContent = `${mine ? 'You' : (m.n || 'Someone')} · ${timeLabel(d)}`;
+        row.appendChild(who);
+      }
+      const b = document.createElement('div');
+      b.className = m.bad ? 'bubble bad' : 'bubble';
+      b.textContent = m.bad ? 'This message could not be unscrambled.' : m.x;
+      row.appendChild(b);
+      frag.appendChild(row);
+      prev = m;
+    }
+    el.chatList.replaceChildren(frag);
+    el.chatEmpty.hidden = chat.items.length > 0 || !chat.loaded;
+    el.chatMore.hidden = !chat.more;
+  }
+
+  function markRead() {
+    if (!chat.items.length) return;
+    store.set('fc-chat-read', String(chat.items[chat.items.length - 1].id));
+  }
+
+  async function loadLatest() {
+    if (chat.loading || chat.loaded || !chat.fam) return;
+    const token = chat.token;
+    chat.loading = true;
+    if (!el.chatMsg.textContent) setChatMsg('Loading messages…');
+    try {
+      const r = await api('/chat/list', { family: chat.fam, limit: 50 });
+      if (token !== chat.token) return;
+      await addMessages(r.messages);
+      if (token !== chat.token) return;
+      advanceCursor(r.messages);
+      chat.more = !!r.more;
+      chat.loaded = true;
+      setChatMsg('');
+      renderChatList();
+      scrollChatToEnd();
+      markRead();
+    } catch (err) {
+      if (token === chat.token) setChatMsg(chatError(err));
+    } finally {
+      if (token === chat.token) chat.loading = false;
+    }
+  }
+
+  async function loadEarlier() {
+    if (chat.loading || !chat.items.length) return;
+    const token = chat.token;
+    chat.loading = true;
+    el.chatMore.disabled = true;
+    try {
+      const r = await api('/chat/list', { family: chat.fam, before: chat.items[0].id, limit: 50 });
+      if (token !== chat.token) return;
+      const fromEnd = el.chatBody.scrollHeight - el.chatBody.scrollTop;
+      await addMessages(r.messages);
+      if (token !== chat.token) return;
+      chat.more = !!r.more;
+      renderChatList();
+      el.chatBody.scrollTop = el.chatBody.scrollHeight - fromEnd;
+    } catch (err) {
+      if (token === chat.token) setChatMsg(chatError(err));
+    } finally {
+      el.chatMore.disabled = false;
+      if (token === chat.token) chat.loading = false;
+    }
+  }
+
+  async function poll() {
+    if (!chat.open || !chat.loaded || chat.polling || document.visibilityState !== 'visible') return;
+    const token = chat.token;
+    chat.polling = true;
+    try {
+      for (;;) {
+        const r = await api('/chat/list', { family: chat.fam, after: chat.cursor, limit: 100 });
+        if (token !== chat.token) return;
+        const atEnd = nearEnd();
+        const added = await addMessages(r.messages);
+        if (token !== chat.token) return;
+        advanceCursor(r.messages);
+        if (added) {
+          renderChatList();
+          if (atEnd) scrollChatToEnd();
+          markRead();
+        }
+        if (!r.messages || r.messages.length < 100) break;
+      }
+      if (!chat.sending) setChatMsg('');
+    } catch (err) {
+      if (token === chat.token) setChatMsg(chatError(err));
+    } finally {
+      if (token === chat.token) chat.polling = false;
+    }
+  }
+
+  async function sendChat() {
+    const text = el.chatInput.value.trim();
+    if (!text || chat.sending) return;
+    const name = cleanName(store.get('fc-name'));
+    if (!name) {
+      setChatMsg('Add your name on the home screen first, so everyone knows who wrote.');
+      return;
+    }
+    if (!chat.loaded) {
+      setChatMsg('Wait for the messages to load, then try again.');
+      return;
+    }
+    const token = chat.token;
+    chat.sending = true;
+    el.chatSend.disabled = true;
+    setChatMsg('');
+    try {
+      const c = await encryptMsg(await chatKey(chat.fam), { n: name, x: text.slice(0, 1000) });
+      const r = await api('/chat/send', { family: chat.fam, id: deviceId(), c });
+      if (token !== chat.token) return;
+      el.chatInput.value = '';
+      sizeInput();
+      // The cursor isn't moved, so a message someone else sent just before still arrives.
+      await addMessages([{ id: r.id, ts: r.ts, from: deviceId(), c }]);
+      renderChatList();
+      scrollChatToEnd();
+      markRead();
+    } catch (err) {
+      if (token === chat.token) setChatMsg(chatError(err));
+    } finally {
+      chat.sending = false;
+      el.chatSend.disabled = false;
+    }
+  }
+
+  function sizeInput() {
+    el.chatInput.style.height = 'auto';
+    el.chatInput.style.height = `${Math.min(el.chatInput.scrollHeight + 4, 140)}px`;
+  }
+
+  async function closeChatNotifications() {
+    try {
+      const reg = await navigator.serviceWorker.getRegistration();
+      const list = reg ? await reg.getNotifications({ tag: 'hawktalk-chat' }) : [];
+      list.forEach((n) => n.close());
+    } catch (_) {}
+  }
+
+  function onChatPush() {
+    if (chat.open && document.visibilityState === 'visible') {
+      poll();
+      closeChatNotifications();
+    } else {
+      refreshUnread();
+    }
+  }
+
+  // The count of new messages on the home screen's Family chat button.
+  let unreadBusy = false;
+  async function refreshUnread() {
+    const fam = family();
+    if (!fam) el.chatBadge.hidden = true;
+    if (!PUSH_SERVER || !fam || unreadBusy || el.home.hidden) return;
+    unreadBusy = true;
+    try {
+      const after = parseInt(store.get('fc-chat-read'), 10) || 0;
+      const r = await api('/chat/list', { family: fam, after, limit: 100 });
+      const me = deviceId();
+      const n = (r.messages || []).filter((m) => m.from !== me).length;
+      el.chatBadge.textContent = n >= 100 ? '99+ new' : `${n} new`;
+      el.chatBadge.hidden = n === 0;
+    } catch (_) {
+      el.chatBadge.hidden = true;
+    } finally {
+      unreadBusy = false;
+    }
+  }
+
   /* ---------- Small helpers ---------- */
 
   let toastTimer = null;
@@ -1741,6 +2296,18 @@
     history.replaceState(null, '', location.pathname + location.search);
     renderHome();
   });
+  el.chatBtn.addEventListener('click', () => { if (getName()) openChat(); });
+  el.chatBack.addEventListener('click', closeChat);
+  el.chatChange.addEventListener('click', changeChatFamily);
+  el.chatFamilyGo.addEventListener('click', setChatFamily);
+  el.chatFamilyInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') setChatFamily(); });
+  el.chatMore.addEventListener('click', loadEarlier);
+  el.chatForm.addEventListener('submit', (ev) => { ev.preventDefault(); sendChat(); });
+  el.chatInput.addEventListener('input', sizeInput);
+  el.chatInput.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter' && !ev.shiftKey && !ev.isComposing) { ev.preventDefault(); sendChat(); }
+  });
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', fitChat);
 
   el.inviteBtn.addEventListener('click', invite);
   el.waitInvite.addEventListener('click', invite);
@@ -1766,9 +2333,12 @@
   });
 
   window.addEventListener('resize', () => { if (state.inCall) layout(); });
-  window.addEventListener('hashchange', () => { if (!state.inCall) renderHome(); });
+  window.addEventListener('hashchange', route);
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState !== 'visible' || !state.inCall) return;
+    if (document.visibilityState !== 'visible') return;
+    if (chat.open) { poll(); closeChatNotifications(); }
+    else if (!state.inCall) refreshUnread();
+    if (!state.inCall) return;
     keepAwake();
     if (state.peer && state.peer.disconnected) scheduleReconnect(state.peer);
     scan();
@@ -1781,7 +2351,7 @@
   });
 
   registerSW();
-  renderHome();
+  route();
   syncPush();
 })();
 </script>

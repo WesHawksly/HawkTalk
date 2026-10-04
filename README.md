@@ -28,9 +28,9 @@ So it opens like a regular app:
 - **iPhone (Safari):** open the link, tap the **Share** button, then **Add to Home Screen**.
 - **Android (Chrome):** open the link, tap the **⋮** menu, then **Add to Home screen** (or **Install app**).
 
-## Call notifications (optional)
+## Call notifications and family chat (optional)
 
-With this set up, you can tap **Ring** during a call, and your siblings' phones get a notification like "Wes is calling". Tapping it opens the call. It needs a small free server to send the notifications, and you set it up once.
+With this set up, you can tap **Ring** during a call, and your siblings' phones get a notification like "Wes is calling". Tapping it opens the call. You also get a **Family chat** on the home screen: a group chat for the family that keeps its history, with a notification for each new message. Both need a small free server, and you set it up once.
 
 ### 1. Set up the push server (one time, about 10 minutes)
 
@@ -43,7 +43,8 @@ The server is the file `push-server/worker.js`. It runs for free on Cloudflare W
 3. Open **Workers & Pages** and click **Create**. Start from the **Hello World** worker, name it `hawktalk-push`, then click **Deploy**.
 4. Click **Edit code**. Delete what's there, paste in everything from `push-server/worker.js`, then click **Deploy**.
 5. Go to the worker's **Settings → Bindings**. Click **Add**, then **KV namespace**. Set the variable name to `HAWK` (capital letters) and pick the `hawktalk` namespace. Save, and deploy again if it asks.
-6. Copy the worker's address. It looks like `https://hawktalk-push.your-name.workers.dev`. If you open it in a browser, you should see `{"ok":true,"app":"Hawk Talk push server","version":"1.1.0"}`.
+6. For the family chat, open **Storage & Databases → D1 SQL Database** and create a database named `hawktalk-chat`. Then in the worker's **Settings → Bindings**, click **Add**, then **D1 database**. Set the variable name to `DB` and pick `hawktalk-chat`.
+7. Copy the worker's address. It looks like `https://hawktalk-push.your-name.workers.dev`. If you open it in a browser, you should see `{"ok":true,"app":"Hawk Talk push server","version":"1.2.0","chat":true}`.
 
 ### 2. Point the app at it
 
@@ -69,7 +70,7 @@ Each sibling does this once on their phone:
 2. Enter your name. Under **Get rung for calls**, type the family code and tap **Turn on**. Allow notifications when asked.
 3. A test notification arrives within a few seconds.
 
-Everyone uses the **same family code**, which is how the app knows who's in your family. Anyone who knows the code can see the names and ring you, so make it hard to guess, like `garcia-hawks-4821`, rather than just `garcia`.
+Everyone uses the **same family code**, which is how the app knows who's in your family. Anyone who knows the code can see the names, ring you and read the family chat, so make it hard to guess, like `garcia-hawks-4821`, rather than just `garcia`.
 
 ## How to use it
 
@@ -101,6 +102,12 @@ After you've been in a call, a **Rejoin** button on the home screen takes you ba
 
 If the sound is off when you join, tap **Tap to turn on sound**.
 
+### Family chat
+
+Tap **Family chat** on the home screen. The first time, type your family code (the same one as for call notifications). Messages are saved, so you can scroll back through them, and everyone who turned on notifications gets one for each new message. The **Family chat** button shows how many new messages are waiting.
+
+Messages are scrambled on your phone with the family code before they're sent, so the server only stores unreadable text. Only people who know the code can read them.
+
 ## Versions
 
 The app's version shows at the bottom of the home screen, and [CHANGELOG.md](CHANGELOG.md) lists what changed in each one. When you release a change:
@@ -117,7 +124,8 @@ Use `major.minor.patch`: bump the last number for fixes, the middle one for new 
 - **"Camera and microphone are blocked"** — allow camera and microphone for this site in your browser's settings, then try again.
 - **"This call already has 6 people"** — the call is full. Wait for someone to leave, or start a call with a different code.
 - **"Reconnecting…"** — your internet dropped. It reconnects on its own when your connection is back.
-- **No "Get rung for calls" section on the home screen** — the push server address isn't set in `index.html` yet (see [Call notifications](#call-notifications-optional)).
+- **No "Get rung for calls" section or Family chat button on the home screen** — the push server address isn't set in `index.html` yet (see [Call notifications and family chat](#call-notifications-and-family-chat-optional)).
+- **"Family chat needs a D1 database"** — the chat database isn't connected to the worker yet. See step 6 of [CLOUDFLARE_SETUP.md](CLOUDFLARE_SETUP.md).
 - **Ring says "Nobody else has turned on call notifications yet"** — your siblings need to turn them on with the exact same family code.
 - **Not getting rung on iPhone** — open Hawk Talk from the Home Screen icon, not from Safari, and turn notifications on from there. Also check **Settings → Notifications → Hawk Talk**.
 - **Nothing loads** — check your internet connection and reload the page. Hawk Talk uses the free [PeerJS](https://peerjs.com/) server to connect people, so it needs internet access.
