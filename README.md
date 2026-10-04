@@ -98,6 +98,7 @@ After you've been in a call, a **Rejoin** button on the home screen takes you ba
 | **Flip** | Switches between front and back camera (phones only) |
 | **Ring** | Sends a "you're being called" notification to the siblings you pick (only shown once call notifications are set up) |
 | **Invite** | Shares the call link with someone else |
+| **Chat** | Opens the family chat on top of the call, which keeps going underneath. A number shows how many new messages are waiting (only shown once the push server is set up) |
 | **Leave** | Ends the call for you |
 
 If the sound is off when you join, tap **Tap to turn on sound**.

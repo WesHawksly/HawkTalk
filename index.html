@@ -197,6 +197,8 @@
     flex-direction: column;
     background: var(--bg);
   }
+  /* Opened from a call: covers the call, which keeps going underneath. */
+  #chat.over-call { z-index: 20; }
   .chat-head {
     flex: none;
     display: flex;
@@ -492,15 +494,16 @@
     z-index: 4;
     display: flex;
     justify-content: center;
-    gap: 14px;
-    padding: 12px 12px calc(env(safe-area-inset-bottom, 0px) + 16px);
+    gap: min(14px, 2vw);
+    padding: 12px 8px calc(env(safe-area-inset-bottom, 0px) + 16px);
   }
+  /* Sized so five buttons fit in a row on small phones. */
   .ctl {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 6px;
-    width: 72px;
+    width: min(72px, 17vw);
     padding: 0;
     border: 0;
     background: none;
@@ -510,8 +513,9 @@
     text-shadow: 0 1px 3px rgba(0, 0, 0, .5);
   }
   .ctl .ic {
-    width: 60px;
-    height: 60px;
+    position: relative;
+    width: min(60px, 15vw);
+    height: min(60px, 15vw);
     border-radius: 50%;
     display: grid;
     place-items: center;
@@ -523,6 +527,20 @@
   .ctl:active .ic { transform: scale(.93); }
   .ctl[data-off="true"] .ic { background: #fff; color: var(--ink); }
   .ctl.leave .ic { background: var(--coral); color: #fff; }
+  .ctl-badge {
+    position: absolute;
+    top: -4px;
+    right: -6px;
+    min-width: 22px;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: var(--coral);
+    color: #fff;
+    font-size: .75rem;
+    font-weight: 700;
+    line-height: 18px;
+    text-shadow: none;
+  }
 
   .sound {
     position: absolute;
@@ -542,7 +560,7 @@
 
   .toast {
     position: fixed;
-    z-index: 10;
+    z-index: 25; /* above the chat, so "Sam joined" still shows while chatting in a call */
     left: 50%;
     transform: translateX(-50%);
     top: calc(env(safe-area-inset-top, 0px) + 74px);
@@ -697,6 +715,7 @@
     <button class="ctl" id="micBtn" type="button"><span class="ic"></span><span class="lbl">Mute</span></button>
     <button class="ctl" id="camBtn" type="button"><span class="ic"></span><span class="lbl">Stop video</span></button>
     <button class="ctl" id="flipBtn" type="button" hidden aria-label="Flip camera"><span class="ic"></span><span class="lbl">Flip</span></button>
+    <button class="ctl" id="chatCtl" type="button" hidden aria-label="Family chat"><span class="ic"><span data-icon="chat"></span><span id="chatCtlBadge" class="ctl-badge" hidden></span></span><span class="lbl">Chat</span></button>
     <button class="ctl leave" id="leaveBtn" type="button" aria-label="Leave call"><span class="ic"></span><span class="lbl">Leave</span></button>
   </nav>
 </section>
@@ -711,7 +730,7 @@
 
   const APP_NAME = 'Hawk Talk';
   // Bump this with each release and add a line to CHANGELOG.md. Shown at the bottom of the home screen.
-  const APP_VERSION = '1.2.0';
+  const APP_VERSION = '1.3.0';
   // Unique to your copy of the app, so your calls never mix with anyone else
   // using the same free connection server. Change it if you ever want a fresh start.
   const PREFIX = 'fc-r8m3tq-';
@@ -764,7 +783,8 @@
     chatFamRow: $('#chatFamRow'), chatFamily: $('#chatFamily'), chatChange: $('#chatChange'), chatBody: $('#chatBody'),
     chatSetup: $('#chatSetup'), chatFamilyInput: $('#chatFamilyInput'), chatFamilyGo: $('#chatFamilyGo'),
     chatLog: $('#chatLog'), chatMore: $('#chatMore'), chatList: $('#chatList'), chatEmpty: $('#chatEmpty'),
-    chatMsg: $('#chatMsg'), chatForm: $('#chatForm'), chatInput: $('#chatInput'), chatSend: $('#chatSend')
+    chatMsg: $('#chatMsg'), chatForm: $('#chatForm'), chatInput: $('#chatInput'), chatSend: $('#chatSend'),
+    chatCtl: $('#chatCtl'), chatCtlBadge: $('#chatCtlBadge')
   };
 
   const state = {
@@ -984,6 +1004,9 @@
     layout();
     scan();
     state.timers.push(setInterval(scan, 6000), setInterval(heartbeat, 4000));
+    // Phones without notifications turned on still see new chat messages counted.
+    state.timers.push(setInterval(() => { if (!chat.open) refreshUnread(); }, 20000));
+    refreshUnread();
     keepAwake();
   }
 
@@ -1331,6 +1354,8 @@
     renderControls();
     renderMe();
     renderRing();
+    el.chatCtl.hidden = !PUSH_SERVER;
+    el.chatCtlBadge.hidden = true;
     checkCameras();
     layout();
     if (!state.hasCam) toast('Your camera is not available, so you joined with audio only.');
@@ -1653,7 +1678,11 @@
       const d = ev.data;
       if (!d) return;
       if (d.t === 'chat') { onChatPush(); return; }
-      if (d.t === 'openChat') { if (!state.inCall && !state.joining) openChat(); return; }
+      if (d.t === 'openChat') {
+        if (state.inCall) openCallChat();
+        else if (!state.joining) openChat();
+        return;
+      }
       if (d.t !== 'open') return;
       const room = cleanCode(d.room);
       if (!room) return;
@@ -1944,11 +1973,25 @@
   }
 
   function closeChat() {
+    if (el.chat.classList.contains('over-call')) {
+      if (history.state && history.state.callChat) history.back();
+      else hideChat();
+      return;
+    }
     if (history.state && history.state.chat) history.back();
     else {
       history.replaceState(null, '', location.pathname + location.search);
       route();
     }
+  }
+
+  // During a call the chat opens on top of it. The extra history entry means the
+  // phone's back gesture closes the chat instead of leaving the page.
+  function openCallChat() {
+    if (!state.inCall || chat.open) return;
+    history.pushState({ callChat: true }, '', location.href);
+    el.chat.classList.add('over-call');
+    openChatPanel();
   }
 
   function resetChat(fam) {
@@ -1964,6 +2007,11 @@
   function showChat() {
     el.home.hidden = true;
     el.call.hidden = true;
+    el.chat.classList.remove('over-call');
+    openChatPanel();
+  }
+
+  function openChatPanel() {
     el.chat.hidden = false;
     chat.open = true;
     fitChat();
@@ -1990,8 +2038,11 @@
     if (!chat.open) return;
     chat.open = false;
     el.chat.hidden = true;
+    el.chat.classList.remove('over-call');
+    el.chatInput.blur();
     clearInterval(chat.timer);
     chat.timer = null;
+    if (state.inCall) refreshUnread();
   }
 
   function setChatFamily() {
@@ -2003,7 +2054,8 @@
     }
     store.set('fc-family', fam);
     setChatMsg('');
-    showChat();
+    openChatPanel();
+    if (state.inCall) renderRing();
   }
 
   function changeChatFamily() {
@@ -2015,7 +2067,8 @@
     store.set('fc-chat-read', '');
     keyCache = null;
     idbPut('chatKey', null);
-    showChat();
+    openChatPanel();
+    if (state.inCall) renderRing();
   }
 
   // Keeps the chat above the on-screen keyboard, which iPhones don't make room for.
@@ -2237,22 +2290,27 @@
     }
   }
 
-  // The count of new messages on the home screen's Family chat button.
+  // The count of new messages on the Family chat button (home screen) or the
+  // Chat button (during a call).
   let unreadBusy = false;
+  function showUnread(n) {
+    el.chatBadge.textContent = n >= 100 ? '99+ new' : `${n} new`;
+    el.chatBadge.hidden = !n;
+    el.chatCtlBadge.textContent = n >= 100 ? '99+' : String(n);
+    el.chatCtlBadge.hidden = !n;
+  }
   async function refreshUnread() {
     const fam = family();
-    if (!fam) el.chatBadge.hidden = true;
-    if (!PUSH_SERVER || !fam || unreadBusy || el.home.hidden) return;
+    if (!fam) showUnread(0);
+    if (!PUSH_SERVER || !fam || unreadBusy || chat.open || (el.home.hidden && !state.inCall)) return;
     unreadBusy = true;
     try {
       const after = parseInt(store.get('fc-chat-read'), 10) || 0;
       const r = await api('/chat/list', { family: fam, after, limit: 100 });
       const me = deviceId();
-      const n = (r.messages || []).filter((m) => m.from !== me).length;
-      el.chatBadge.textContent = n >= 100 ? '99+ new' : `${n} new`;
-      el.chatBadge.hidden = n === 0;
+      showUnread((r.messages || []).filter((m) => m.from !== me).length);
     } catch (_) {
-      el.chatBadge.hidden = true;
+      showUnread(0);
     } finally {
       unreadBusy = false;
     }
@@ -2327,6 +2385,10 @@
   el.camBtn.addEventListener('click', toggleCam);
   el.flipBtn.addEventListener('click', flipCamera);
   el.leaveBtn.addEventListener('click', leaveCall);
+  el.chatCtl.addEventListener('click', openCallChat);
+  window.addEventListener('popstate', () => {
+    if (el.chat.classList.contains('over-call') && !(history.state && history.state.callChat)) hideChat();
+  });
   el.soundBtn.addEventListener('click', () => {
     el.soundBtn.hidden = true;
     el.stage.querySelectorAll('video').forEach(playVideo);

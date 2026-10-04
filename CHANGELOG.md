@@ -2,6 +2,11 @@
 
 What changed in each version of Hawk Talk. The app shows its version at the bottom of the home screen, and the push server shows its version when you open its address in a browser.
 
+## 1.3.0 (2026-10-03)
+
+- **Chat during a call.** A new **Chat** button in the call controls opens the family chat on top of the call, which keeps going underneath. It shows how many new messages are waiting. The phone's back gesture closes the chat, and tapping a chat notification during a call opens it too.
+- The call buttons shrink a little on small phones so five fit in a row.
+
 ## 1.2.0 (2026-10-03)
 
 - **Family chat.** A group chat for the family on the home screen, with saved history and a notification for each new message. Messages are scrambled on the phones with the family code, so the server only stores unreadable text. Needs the push server updated to 1.2.0 and a D1 database connected to it. See step 6 of [CLOUDFLARE_SETUP.md](CLOUDFLARE_SETUP.md).
